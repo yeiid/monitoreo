@@ -1,0 +1,58 @@
+{
+    "countries": [
+        {
+            "id": "colombia",
+            "name": "Colombia",
+            "departments": [
+                {
+                    "id": "guajira",
+                    "name": "La Guajira",
+                    "municipalities": [
+                        {
+                            "id": "hatonuevo",
+                            "name": "Hatonuevo",
+                            "center": [
+                                11.0667,
+                                -72.7667
+                            ],
+                            "zoom": 15
+                        },
+                        {
+                            "id": "riohacha",
+                            "name": "Riohacha",
+                            "center": [
+                                11.5444,
+                                -72.9069
+                            ],
+                            "zoom": 14
+                        },
+                        {
+                            "id": "barrancas",
+                            "name": "Barrancas",
+                            "center": [
+                                11.02,
+                                -72.78
+                            ],
+                            "zoom": 15
+                        }
+                    ]
+                },
+                {
+                    "id": "antioquia",
+                    "name": "Antioquia",
+                    "municipalities": [
+                        {
+                            "id": "medellin",
+                            "name": "Medellín",
+                            "center": [
+                                6.2442,
+                                -75.5812
+                            ],
+                            "zoom": 13
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

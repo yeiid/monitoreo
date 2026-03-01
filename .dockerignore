@@ -1,0 +1,14 @@
+.git
+.vscode
+node_modules
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.db
+backend/venv
+frontend/node_modules
+frontend/dist
+.env
+.astro

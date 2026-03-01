@@ -1,0 +1,299 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+---
+
+<Layout title="Cables / Rutas - FTTH Mapper">
+    <main class="dashboard-container">
+        <Sidebar client:load />
+
+        <div class="main-content">
+            <Header client:load />
+
+            <div class="content-scroll">
+                <div class="content-header">
+                    <h1>Cables y Rutas de Fibra</h1>
+                    <a
+                        href="/"
+                        class="primary-btn"
+                        style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
+                    >
+                        ← Volver al Mapa
+                    </a>
+                </div>
+
+                <div class="color-legend glass-morphism">
+                    <h3 style="margin-bottom: 12px; font-size: 0.88rem;">
+                        Estándar TIA-598 — Código de Colores de Fibra
+                    </h3>
+                    <div class="color-grid" id="color-grid"></div>
+                </div>
+
+                <div class="table-container glass-morphism">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre del Cable</th>
+                                <th>Tipo</th>
+                                <th>Capacidad</th>
+                                <th>Hilos Generados</th>
+                                <th>Descripción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="routes-tbody">
+                            <tr>
+                                <td
+                                    colspan="5"
+                                    style="text-align:center; padding: 40px; color: var(--text-muted);"
+                                >
+                                    Cargando rutas...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    let API_BASE =
+        import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    if (
+        window.location.protocol === "https:" &&
+        API_BASE.startsWith("http://")
+    ) {
+        API_BASE = API_BASE.replace("http://", "https://");
+    }
+
+    const TIA_COLORS = [
+        { name: "Azul", key: "azul", hex: "#2563eb" },
+        { name: "Naranja", key: "naranja", hex: "#f97316" },
+        { name: "Verde", key: "verde", hex: "#22c55e" },
+        { name: "Marrón", key: "marron", hex: "#92400e" },
+        { name: "Gris", key: "gris", hex: "#9ca3af" },
+        { name: "Blanco", key: "blanco", hex: "#f1f5f9" },
+        { name: "Rojo", key: "rojo", hex: "#ef4444" },
+        { name: "Negro", key: "negro", hex: "#374151" },
+        { name: "Amarillo", key: "amarillo", hex: "#facc15" },
+        { name: "Violeta", key: "violeta", hex: "#a855f7" },
+        { name: "Rosa", key: "rosa", hex: "#ec4899" },
+        { name: "Aqua", key: "aqua", hex: "#06b6d4" },
+    ];
+
+    // Render color legend
+    const colorGrid = document.getElementById("color-grid")!;
+    colorGrid.innerHTML = TIA_COLORS.map(
+        (c, i) => `
+        <div class="color-chip">
+            <div class="color-swatch" style="background:${c.hex};${c.key === "blanco" ? "border:1px solid #555;" : ""}"></div>
+            <span class="color-num">${i + 1}</span>
+            <span class="color-name">${c.name}</span>
+        </div>
+    `,
+    ).join("");
+
+    async function loadRoutes() {
+        try {
+            // Initial load from cache
+            const cachedRoutes = localStorage.getItem("ftth_routes");
+            if (cachedRoutes) {
+                renderRoutes(JSON.parse(cachedRoutes));
+            }
+
+            console.log(`[Routes] Fetching from ${API_BASE}/routes...`);
+            const res = await fetch(`${API_BASE}/routes`);
+            if (!res.ok) throw new Error("API error");
+            const routes = await res.json();
+
+            // Save to cache
+            localStorage.setItem("ftth_routes", JSON.stringify(routes));
+            renderRoutes(routes);
+        } catch {
+            if (!localStorage.getItem("ftth_routes")) {
+                document.getElementById("routes-tbody")!.innerHTML =
+                    '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--error);">Error conectando con la API y no hay datos locales.</td></tr>';
+            }
+        }
+    }
+
+    function renderRoutes(routes: any[]) {
+        const tbody = document.getElementById("routes-tbody")!;
+        if (routes.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">No hay cables registrados.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = routes
+            .map(
+                (r: any) => `
+            <tr>
+                <td><strong style="color:white;">${r.name}</strong></td>
+                <td>
+                    <span class="stat-badge" style="
+                        background: ${r.route_type === "TRONCAL" ? "rgba(168, 85, 247, 0.12)" : r.route_type === "DISTRIBUCION" ? "rgba(59, 130, 246, 0.12)" : "rgba(16, 185, 129, 0.12)"};
+                        color: ${r.route_type === "TRONCAL" ? "#A855F7" : r.route_type === "DISTRIBUCION" ? "#3B82F6" : "#10B981"};
+                        border: 1px solid ${r.route_type === "TRONCAL" ? "rgba(168, 85, 247, 0.2)" : r.route_type === "DISTRIBUCION" ? "rgba(59, 130, 246, 0.2)" : "rgba(16, 185, 129, 0.2)"};
+                    ">
+                        ${r.route_type || "TRONCAL"}
+                    </span>
+                </td>
+                <td><span class="stat-badge" style="background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid rgba(255,255,255,0.1);">${r.capacity} hilos</span></td>
+                <td>
+                    <button class="secondary-btn" style="font-size:0.78rem;padding:5px 12px;" onclick="generateStrands('${r.id}')">
+                        Generar Hilos
+                    </button>
+                </td>
+                <td style="font-size:0.85rem;color:var(--text-muted);">${r.description || "—"}</td>
+                <td>
+                    <button class="secondary-btn danger-btn" style="font-size:0.78rem;padding:5px 12px;" onclick="deleteRoute('${r.id}')">Eliminar</button>
+                </td>
+            </tr>
+        `,
+            )
+            .join("");
+    }
+
+    (window as any).generateStrands = async function (routeId: string) {
+        try {
+            const res = await fetch(`${API_BASE}/strands/generate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ route_id: routeId }),
+            });
+            if (res.ok) {
+                const strands = await res.json();
+                alert(
+                    `Se generaron ${strands.length} hilos con colores TIA-598.`,
+                );
+            }
+        } catch (e) {
+            alert("Error generando hilos.");
+        }
+    };
+
+    (window as any).deleteRoute = async function (id: string) {
+        if (!confirm("¿Eliminar este cable?")) return;
+        try {
+            await fetch(`${API_BASE}/routes/${id}`, { method: "DELETE" });
+        } catch {}
+        loadRoutes();
+    };
+
+    loadRoutes();
+</script>
+
+<style>
+    .dashboard-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 24px 16px 0;
+        overflow: hidden;
+    }
+
+    .content-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .content-header h1 {
+        font-size: 1.6rem;
+        color: white;
+    }
+
+    .color-legend {
+        padding: 20px 24px;
+        margin-bottom: 20px;
+    }
+
+    .color-legend h3 {
+        color: var(--text-muted);
+    }
+
+    .color-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .color-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .color-swatch {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .color-num {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        min-width: 14px;
+    }
+
+    .color-name {
+        font-size: 0.78rem;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .table-container {
+        padding: 4px;
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .data-table th {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+    }
+
+    .data-table td {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-main);
+        font-size: 0.88rem;
+    }
+
+    .data-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+</style>

@@ -1,0 +1,36 @@
+services:
+  # 🌐 API Backend
+  api:
+    build: ./backend
+    container_name: monitoreo_api
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    # Coolify will handle the ingress and certificate
+
+    # 💻 Web Frontend
+  web:
+    build:
+      context: ./frontend
+      args:
+        - PUBLIC_API_URL=${PUBLIC_API_URL}
+    container_name: monitoreo_web
+    restart: unless-stopped
+    expose:
+      - "80"
+    # Coolify will handle the ingress and certificate
+
+    # 🗺️ TileServer GL
+  tileserver:
+    image: maptiler/tileserver-gl:latest
+    container_name: monitoreo_tileserver
+    restart: unless-stopped
+    volumes:
+      - ./maps:/data
+    expose:
+      - "8080"
+    command: [ "-p", "8080", "--mbtiles", "colombia.mbtiles" ]
+    # Coolify will handle the ingress and certificate

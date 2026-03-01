@@ -1,0 +1,21 @@
+import asyncio
+import os
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import text
+from dotenv import load_dotenv
+
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+async def print_schema():
+    engine = create_async_engine(DATABASE_URL)
+    async with engine.connect() as conn:
+        for table in ['splitters', 'splices', 'fiber_strands']:
+            print(f"\n--- {table} ---")
+            res = await conn.execute(text(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}';"))
+            for row in res:
+                print(f"{row[0]}: {row[1]}")
+    await engine.dispose()
+
+if __name__ == "__main__":
+    asyncio.run(print_schema())

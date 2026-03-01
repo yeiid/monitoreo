@@ -1,0 +1,324 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+---
+
+<Layout title="Nodos - FTTH Mapper">
+    <main class="dashboard-container">
+        <Sidebar client:load />
+
+        <div class="main-content">
+            <Header client:load />
+
+            <div class="content-scroll">
+                <div class="content-header">
+                    <h1>Gestión de Nodos de Red</h1>
+                    <a
+                        href="/"
+                        class="primary-btn"
+                        style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
+                    >
+                        ← Volver al Mapa
+                    </a>
+                </div>
+
+                <div class="stats-row">
+                    <div class="mini-stat glass-morphism">
+                        <div
+                            class="mini-stat-icon"
+                            style="background: rgba(239, 68, 68, 0.12); color: var(--olt-color);"
+                        >
+                            📡
+                        </div>
+                        <div>
+                            <span class="mini-stat-label">OLTs</span>
+                            <span class="mini-stat-value" id="count-olt">-</span
+                            >
+                        </div>
+                    </div>
+                    <div class="mini-stat glass-morphism">
+                        <div
+                            class="mini-stat-icon"
+                            style="background: rgba(245, 158, 11, 0.12); color: var(--mufla-color);"
+                        >
+                            🔶
+                        </div>
+                        <div>
+                            <span class="mini-stat-label">Muflas</span>
+                            <span class="mini-stat-value" id="count-mufla"
+                                >-</span
+                            >
+                        </div>
+                    </div>
+                    <div class="mini-stat glass-morphism">
+                        <div
+                            class="mini-stat-icon"
+                            style="background: rgba(6, 182, 212, 0.12); color: var(--nap-color);"
+                        >
+                            📦
+                        </div>
+                        <div>
+                            <span class="mini-stat-label">NAPs</span>
+                            <span class="mini-stat-value" id="count-nap">-</span
+                            >
+                        </div>
+                    </div>
+                    <div class="mini-stat glass-morphism">
+                        <div
+                            class="mini-stat-icon"
+                            style="background: rgba(16, 185, 129, 0.12); color: var(--client-color);"
+                        >
+                            🏠
+                        </div>
+                        <div>
+                            <span class="mini-stat-label">Clientes ONU</span>
+                            <span class="mini-stat-value" id="count-client"
+                                >-</span
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container glass-morphism">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Ubicación</th>
+                                <th>Potencia (dBm)</th>
+                                <th>Descripción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nodes-tbody">
+                            <tr>
+                                <td
+                                    colspan="5"
+                                    style="text-align:center; padding: 40px; color: var(--text-muted);"
+                                >
+                                    Cargando nodos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    let API_BASE =
+        import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    if (
+        window.location.protocol === "https:" &&
+        API_BASE.startsWith("http://")
+    ) {
+        API_BASE = API_BASE.replace("http://", "https://");
+    }
+    const NODE_BADGES: Record<string, string> = {
+        OLT: "olt",
+        MUFLA: "mufla",
+        CAJA_NAP: "nap",
+        CLIENTE_ONU: "client",
+    };
+    const NODE_LABELS: Record<string, string> = {
+        OLT: "OLT",
+        MUFLA: "Mufla",
+        CAJA_NAP: "Caja NAP",
+        CLIENTE_ONU: "Cliente ONU",
+    };
+
+    async function loadNodes() {
+        try {
+            // Initial load from cache for instant feel
+            const cachedNodes = localStorage.getItem("ftth_nodes");
+            if (cachedNodes) {
+                renderNodes(JSON.parse(cachedNodes));
+            }
+
+            console.log(`[Nodes] Fetching from ${API_BASE}/nodes...`);
+            const res = await fetch(`${API_BASE}/nodes`);
+            if (!res.ok) throw new Error("API error");
+            const nodes = await res.json();
+
+            // Save to cache
+            localStorage.setItem("ftth_nodes", JSON.stringify(nodes));
+            renderNodes(nodes);
+        } catch (e) {
+            console.error(e);
+            // If API fails, try to use cache if we haven't already
+            if (!localStorage.getItem("ftth_nodes")) {
+                document.getElementById("nodes-tbody")!.innerHTML =
+                    '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--error);">Error conectando con la API y no hay datos locales.</td></tr>';
+            }
+        }
+    }
+
+    function renderNodes(nodes: any[]) {
+        // Update counts
+        const counts: Record<string, number> = {
+            OLT: 0,
+            MUFLA: 0,
+            CAJA_NAP: 0,
+            CLIENTE_ONU: 0,
+        };
+        nodes.forEach((n: any) => {
+            if (counts[n.node_type] !== undefined) counts[n.node_type]++;
+        });
+        document.getElementById("count-olt")!.textContent = String(counts.OLT);
+        document.getElementById("count-mufla")!.textContent = String(
+            counts.MUFLA,
+        );
+        document.getElementById("count-nap")!.textContent = String(
+            counts.CAJA_NAP,
+        );
+        document.getElementById("count-client")!.textContent = String(
+            counts.CLIENTE_ONU,
+        );
+
+        const tbody = document.getElementById("nodes-tbody")!;
+        if (nodes.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">No hay nodos registrados.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = nodes
+            .map(
+                (n: any) => `
+            <tr>
+                <td><strong style="color:white;">${n.name}</strong></td>
+                <td><span class="stat-badge ${NODE_BADGES[n.node_type] || ""}">${NODE_LABELS[n.node_type] || n.node_type}</span></td>
+                <td style="font-size:0.82rem;">${n.location ? `${n.location.lat.toFixed(5)}, ${n.location.lng.toFixed(5)}` : "—"}</td>
+                <td style="font-weight:bold; color: ${n.optical_power_dbm !== null ? (n.optical_power_dbm < -25 ? "var(--error)" : "var(--success)") : "var(--text-muted)"};">
+                    ${n.optical_power_dbm !== null ? `${n.optical_power_dbm} dBm` : "—"}
+                </td>
+                <td style="font-size:0.85rem;color:var(--text-muted);">${n.description || "—"}</td>
+                <td>
+                    <button class="secondary-btn" style="font-size:0.78rem;padding:5px 12px;" onclick="deleteNode('${n.id}')">Eliminar</button>
+                </td>
+            </tr>
+        `,
+            )
+            .join("");
+    }
+
+    (window as any).deleteNode = async function (id: string) {
+        if (!confirm("¿Eliminar este nodo?")) return;
+        try {
+            await fetch(`${API_BASE}/nodes/${id}`, { method: "DELETE" });
+        } catch {}
+        loadNodes();
+    };
+
+    loadNodes();
+</script>
+
+<style>
+    .dashboard-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 24px 16px 0;
+        overflow: hidden;
+    }
+
+    .content-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .content-header h1 {
+        font-size: 1.6rem;
+        color: white;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .mini-stat {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 20px;
+    }
+
+    .mini-stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .mini-stat-label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+    }
+
+    .mini-stat-value {
+        display: block;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: white;
+    }
+
+    .table-container {
+        padding: 4px;
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .data-table th {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+    }
+
+    .data-table td {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-main);
+        font-size: 0.88rem;
+    }
+
+    .data-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+</style>
