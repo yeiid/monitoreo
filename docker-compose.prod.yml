@@ -1,7 +1,9 @@
 services:
   # 🌐 API Backend
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: monitoreo_api
     restart: unless-stopped
     expose:
@@ -15,6 +17,7 @@ services:
   web:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
       args:
         - PUBLIC_API_URL=${PUBLIC_API_URL}
     container_name: monitoreo_web
