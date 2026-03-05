@@ -71,6 +71,11 @@ export const ROUTE_CONFIG: Record<string, RouteConfigItem> = {
 let RawAPI = (typeof import.meta !== 'undefined' && (import.meta as any).env?.PUBLIC_API_URL)
     || 'http://localhost:8000/api/v1';
 
+// Ensure /api/v1 prefix
+if (RawAPI && !RawAPI.endsWith('/api/v1') && !RawAPI.endsWith('/api/v1/')) {
+    RawAPI = RawAPI.endsWith('/') ? `${RawAPI}api/v1` : `${RawAPI}/api/v1`;
+}
+
 // Aggressive fix: If we're not on localhost, force https
 if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
     RawAPI = RawAPI.replace('http://', 'https://');

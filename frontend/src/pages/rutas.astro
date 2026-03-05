@@ -60,14 +60,7 @@ import Header from "../components/Header";
 </Layout>
 
 <script>
-    let API_BASE =
-        import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/v1";
-    if (
-        window.location.protocol === "https:" &&
-        API_BASE.startsWith("http://")
-    ) {
-        API_BASE = API_BASE.replace("http://", "https://");
-    }
+    import { API_BASE } from "../components/map/types";
 
     const TIA_COLORS = [
         { name: "Azul", key: "azul", hex: "#2563eb" },
