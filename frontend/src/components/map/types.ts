@@ -101,7 +101,7 @@ export const API_BASE = RawAPI;
 
 // 2. TileServer configuration
 export const MAP_TILE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_TILE_URL)
-    || 'https://tiles.neuraljira.tech/data/colombia/{z}/{x}/{y}.png';
+    || 'https://tiles.neuraljira.tech/styles/basic-preview/512/{z}/{x}/{y}.png';
 
 export const TILES_ATTRIBUTION = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_ATTRIBUTION)
     || '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';

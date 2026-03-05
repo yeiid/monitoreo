@@ -16,6 +16,16 @@ app = FastAPI(
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
+from fastapi import Request
+@app.middleware("http")
+async def force_https_middleware(request: Request, call_next):
+    # If the proxy (Traefik/Coolify) tells us it's HTTPS, force the scheme to https
+    # This prevents Starlette/FastAPI from generating insecure HTTP redirects
+    if request.headers.get("x-forwarded-proto") == "https":
+        request.scope["scheme"] = "https"
+    response = await call_next(request)
+    return response
+
 @app.on_event("startup")
 async def on_startup():
     await init_db()
