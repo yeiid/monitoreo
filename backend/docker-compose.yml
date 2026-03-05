@@ -18,13 +18,17 @@ services:
       - db
     ports:
       - "8000:8000"
+    volumes:
+      - /var/www/maps:/app/maps
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - MAP_DOWNLOAD_URL=${MAP_DOWNLOAD_URL}
+    command: sh -c "python download_maps.py && uvicorn app.main:app --host 0.0.0.0 --port $${PORT:-8000}"
   tileserver:
     image: maptiler/tileserver-gl:latest
     container_name: monitoreo_tileserver
     volumes:
-      - ./maps:/data
+      - /var/www/maps:/data
     ports:
       - "8080:8080"
     command: [ "-p", "8080", "--mbtiles", "colombia.mbtiles" ]
