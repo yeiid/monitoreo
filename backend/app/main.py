@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .db.session import init_db
@@ -16,11 +17,13 @@ async def on_startup():
 # Routers
 app.include_router(network_router, prefix="/api/v1", tags=["FTTH Network"])
 
-# CORS
+# CORS configuration
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,   # Must be False when allow_origins=["*"]
+    allow_origins=cors_origins,
+    allow_credentials=True if os.getenv("CORS_ALLOW_CREDENTIALS") == "true" else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

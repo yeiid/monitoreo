@@ -30,3 +30,7 @@ postgres_data/
 # Logs
 logs/
 *.log
+
+# Maps (Uploaded directly to VPS)
+backend/maps/colombia.mbtiles
+backend/maps/colombia.osm.pbf

@@ -1,4 +1,5 @@
 import os
+import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
@@ -23,11 +24,26 @@ connect_args = {"check_same_thread": False} if IS_SQLITE else {}
 engine = create_async_engine(DATABASE_URL, echo=True, future=True, connect_args=connect_args)
 
 async def init_db():
-    async with engine.begin() as conn:
-        if not IS_SQLITE:
-            # Enable PostGIS extension only on PostgreSQL
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
-        await conn.run_sync(SQLModel.metadata.create_all)
+    max_retries = 5
+    retry_delay = 5
+    
+    for i in range(max_retries):
+        try:
+            async with engine.begin() as conn:
+                if not IS_SQLITE:
+                    # Enable PostGIS extension only on PostgreSQL
+                    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+                await conn.run_sync(SQLModel.metadata.create_all)
+            print("✅ Database initialized successfully.")
+            return
+        except Exception as e:
+            if i < max_retries - 1:
+                print(f"⚠️ Database connection failed, retrying in {retry_delay}s... ({i+1}/{max_retries})")
+                print(f"Error: {e}")
+                await asyncio.sleep(retry_delay)
+            else:
+                print("❌ Max retries reached. Database initialisation failed.")
+                raise e
 
 async def get_session() -> AsyncSession:
     async_session = sessionmaker(
