@@ -79,6 +79,9 @@ const getRawApi = () => {
         return import.meta.env.PUBLIC_API_URL;
     }
     // Fallback for local development or other environments
+    if (typeof window !== 'undefined' && window.location.hostname.includes('neuraljira.tech')) {
+        return 'https://api.neuraljira.tech/api/v1';
+    }
     return 'http://localhost:8000/api/v1';
 };
 
@@ -92,9 +95,14 @@ if (!RawAPI.endsWith('/api/v1')) {
     RawAPI = `${RawAPI}/api/v1`;
 }
 
-// Aggressive fix: If we're not on localhost, force https
-if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
-    RawAPI = RawAPI.replace('http://', 'https://');
+// Aggressive fix: If we're not on localhost/127.0.0.1, force https
+if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.startsWith('192.168.');
+    if (!isLocal) {
+        RawAPI = RawAPI.replace('http://', 'https://');
+    }
 }
 
 export const API_BASE = RawAPI;
