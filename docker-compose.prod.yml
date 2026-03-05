@@ -27,6 +27,8 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
     depends_on:
       - db
+    volumes:
+      - /var/www/maps:/app/maps
     # Coolify will handle the ingress and certificate
 
     # 💻 Web Frontend
@@ -48,7 +50,7 @@ services:
     container_name: monitoreo_tileserver
     restart: unless-stopped
     volumes:
-      - ./backend/maps:/data
+      - /var/www/maps:/data
     expose:
       - "8080"
     command: [ "-p", "8080", "--mbtiles", "colombia.mbtiles" ]
