@@ -1,3 +1,4 @@
+# Script para verificar las columnas y tipos de datos de las tablas principales (splitters, splices, fiber_strands)
 import asyncio
 import os
 from sqlalchemy.ext.asyncio import create_async_engine

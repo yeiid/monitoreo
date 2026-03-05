@@ -1,3 +1,4 @@
+# Script de diagnóstico y reparación automática: Verifica y añade columnas faltantes en las tablas de la base de datos
 import asyncio
 import os
 from sqlalchemy.ext.asyncio import create_async_engine

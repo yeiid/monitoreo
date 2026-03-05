@@ -9,19 +9,39 @@ from dotenv import load_dotenv
 # Load .env from backend/ folder
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./monitoreo.db") # Fallback a SQLite local
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL or DATABASE_URL.startswith("${"):
+    print("⚠️ DATABASE_URL not set or unresolved, falling back to local SQLite.")
+    DATABASE_URL = "sqlite+aiosqlite:///./monitoreo.db"
 
 # Force asyncpg driver for PostgreSQL since AsyncEngine requires it
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
-elif DATABASE_URL.startswith("postgresql://"):
+elif DATABASE_URL.startswith("postgresql://") and "asyncpg" not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Debug: Print masked URL to verify format in logs
+masked_url = DATABASE_URL
+if "@" in DATABASE_URL:
+    prefix = DATABASE_URL.split("@")[0]
+    suffix = DATABASE_URL.split("@")[1]
+    if ":" in prefix:
+        parts = prefix.split(":")
+        masked_url = f"{parts[0]}:***@{suffix}"
+
+print(f"📡 Connecting to database: {masked_url}")
 
 # Check if using SQLite to disable specific PostGIS features
 IS_SQLITE = DATABASE_URL.startswith("sqlite")
 
 connect_args = {"check_same_thread": False} if IS_SQLITE else {}
-engine = create_async_engine(DATABASE_URL, echo=True, future=True, connect_args=connect_args)
+try:
+    engine = create_async_engine(DATABASE_URL, echo=True, future=True, connect_args=connect_args)
+except Exception as e:
+    print(f"❌ CRITICAL: Failed to create engine with URL: {masked_url}")
+    print(f"Error detail: {e}")
+    raise e
 
 async def init_db():
     max_retries = 5

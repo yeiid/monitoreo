@@ -1,4 +1,18 @@
 services:
+  # 🗄️ Database (PostGIS)
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: monitoreo_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-monitoreo}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-monitoreo123}
+      - POSTGRES_DB=${POSTGRES_DB:-monitoreodb}
+    volumes:
+      - /var/lib/monitoreo/db:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
   # 🌐 API Backend
   api:
     build:
@@ -9,8 +23,10 @@ services:
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-monitoreo}:${POSTGRES_PASSWORD:-monitoreo123}@db:5432/${POSTGRES_DB:-monitoreodb}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    depends_on:
+      - db
     volumes:
       - /var/www/maps:/app/maps
 

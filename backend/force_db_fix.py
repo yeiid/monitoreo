@@ -1,3 +1,4 @@
+# Script de reparación forzada: Versión completa para actualizar todas las tablas críticas (splitters, splices, fiber_strands) con sus columnas necesarias
 import asyncio
 import os
 from sqlalchemy.ext.asyncio import create_async_engine

@@ -1,3 +1,4 @@
+# Script de parche v2: Asegura que las tablas splitters y splices tengan las columnas y valores por defecto correctos
 import asyncio
 import os
 from sqlalchemy.ext.asyncio import create_async_engine
