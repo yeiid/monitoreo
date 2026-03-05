@@ -12,7 +12,7 @@ from ....schemas.network import RouteCreate, RouteRead, RouteUpdate
 
 router = APIRouter()
 
-@router.post("/", response_model=RouteRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=RouteRead, status_code=status.HTTP_201_CREATED)
 async def create_route(data: RouteCreate, session: AsyncSession = Depends(get_session)):
     route_data = data.model_dump()
     if route_data.get("path"):
@@ -39,7 +39,7 @@ async def create_route(data: RouteCreate, session: AsyncSession = Depends(get_se
     await session.refresh(db_route)
     return db_route
 
-@router.get("/", response_model=List[RouteRead])
+@router.get("", response_model=List[RouteRead])
 async def list_routes(node_id: str = None, session: AsyncSession = Depends(get_session)):
     statement = select(Route, func.ST_Length(cast(Route.path, Geography)))
     if node_id:

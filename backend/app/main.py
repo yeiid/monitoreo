@@ -1,6 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from .db.session import init_db
 from .api.v1.router import api_router as network_router
 
@@ -9,6 +11,10 @@ app = FastAPI(
     description="Backend para el sistema de mapeo manual de planta externa FTTH",
     version="2.0.0"
 )
+
+# Trust proxy headers (Coolify/Traefik)
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 @app.on_event("startup")
 async def on_startup():
