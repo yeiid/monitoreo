@@ -68,12 +68,28 @@ export const ROUTE_CONFIG: Record<string, RouteConfigItem> = {
     ACOMETIDA: { color: '#10B981', weight: 2, opacity: 0.8, dash: '5, 5', label: 'Acometida' },
 };
 
-let RawAPI = (typeof import.meta !== 'undefined' && (import.meta as any).env?.PUBLIC_API_URL)
-    || 'http://localhost:8000/api/v1';
+// ─────────────────────────────────
+// Environment configuration
+// ─────────────────────────────────
 
-// Ensure /api/v1 prefix
-if (RawAPI && !RawAPI.endsWith('/api/v1') && !RawAPI.endsWith('/api/v1/')) {
-    RawAPI = RawAPI.endsWith('/') ? `${RawAPI}api/v1` : `${RawAPI}/api/v1`;
+// 1. API_BASE with robust sanitization for Astro
+const getRawApi = () => {
+    // Standard Astro client-side environment variables
+    if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
+        return import.meta.env.PUBLIC_API_URL;
+    }
+    // Fallback for local development or other environments
+    return 'http://localhost:8000/api/v1';
+};
+
+let RawAPI = getRawApi();
+
+// Remove trailing slash to avoid double slashes or 307 redirects
+RawAPI = RawAPI.replace(/\/$/, '');
+
+// Ensure /api/v1 prefix is present
+if (!RawAPI.endsWith('/api/v1')) {
+    RawAPI = `${RawAPI}/api/v1`;
 }
 
 // Aggressive fix: If we're not on localhost, force https
@@ -82,6 +98,13 @@ if (typeof window !== 'undefined' && !window.location.hostname.includes('localho
 }
 
 export const API_BASE = RawAPI;
+
+// 2. TileServer configuration
+export const MAP_TILE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_TILE_URL)
+    || 'https://tiles.neuraljira.tech/styles/dark-matter/{z}/{x}/{y}.png';
+
+export const TILES_ATTRIBUTION = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_ATTRIBUTION)
+    || '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';
 
 // ─────────────────────────────────
 // Fiber Standards (TIA/EIA-598)

@@ -18,14 +18,28 @@ async def on_startup():
 app.include_router(network_router, prefix="/api/v1", tags=["FTTH Network"])
 
 # CORS configuration
-cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+origins = os.getenv("CORS_ORIGINS", "*").split(",")
+# Add common variations to ensure connectivity
+if "*" not in origins:
+    additional = [
+        "https://fttpmapper.neuraljira.tech",
+        "https://FTTPMAPPER.neuraljira.tech",
+        "https://neuraljira.tech",
+        "http://localhost:3000",
+        "http://localhost:4321",
+        "http://localhost:8000",
+    ]
+    for origin in additional:
+        if origin not in origins:
+            origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=origins,
     allow_credentials=True if os.getenv("CORS_ALLOW_CREDENTIALS") == "true" else False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 @app.get("/")

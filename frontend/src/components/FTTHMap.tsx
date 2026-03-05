@@ -10,7 +10,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import type { NodeData, RouteData, DrawingTool } from './map/types';
-import { NODE_CONFIG, ROUTE_CONFIG, API_BASE } from './map/types';
+import { NODE_CONFIG, ROUTE_CONFIG, API_BASE, MAP_TILE_URL, TILES_ATTRIBUTION } from './map/types';
 import { createNodeIcon, CABLE_POINT_ICON } from './map/leafletUtils';
 import MapToolbar from './map/MapToolbar';
 import FloatingStats from './map/FloatingStats';
@@ -410,8 +410,8 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
             >
                 <MapUpdater center={center} zoom={zoom} />
                 <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+                    url={MAP_TILE_URL}
+                    attribution={TILES_ATTRIBUTION}
                 />
                 <MapClickHandler tool={activeTool} onMapClick={handleMapClick} onCablePoint={handleCablePoint} />
 
