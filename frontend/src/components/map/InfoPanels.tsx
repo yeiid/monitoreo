@@ -17,10 +17,13 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
 
     return (
         <div className="info-panel">
-            <h3>
-                <span style={{ color: cfg?.color }}>{cfg?.icon}</span>{' '}
-                {node.name}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0 }}>
+                    <span style={{ color: cfg?.color }}>{cfg?.icon}</span>{' '}
+                    {node.name}
+                </h3>
+                <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }} onClick={onClose}>✕</button>
+            </div>
 
             <div className="info-item">
                 <span className="label">Tipo</span>
@@ -72,10 +75,6 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
                     <Trash2 size={14} />
                 </button>
             </div>
-
-            <button className="secondary-btn" style={{ width: '100%', marginTop: '8px' }} onClick={onClose}>
-                Cerrar
-            </button>
         </div>
     );
 };

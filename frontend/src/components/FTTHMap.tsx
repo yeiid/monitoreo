@@ -90,7 +90,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
     const [showTerminationModal, setShowTerminationModal] = useState(false);
     const [clientForm, setClientForm] = useState({ name: '', address: '', contract: '' });
     const [isSaving, setIsSaving] = useState(false);
-    const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
+    const [pressTimer, setPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
     // ── Data fetching ──
     const fetchNodes = useCallback(async () => {
@@ -474,8 +474,11 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                             mousedown: (e) => handleNodePressStart(node, e.latlng),
                             mouseup: handleNodePressEnd,
                             mouseout: handleNodePressEnd,
-                            touchstart: (e) => handleNodePressStart(node, e.latlng),
+                            // @ts-ignore - Leaflet types don't include touch events by default
+                            touchstart: (e: any) => handleNodePressStart(node, e.latlng),
+                            // @ts-ignore
                             touchend: handleNodePressEnd,
+                            // @ts-ignore
                             touchcancel: handleNodePressEnd,
                             click: () => {
                                 handleNodePressEnd();
@@ -483,26 +486,14 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                             },
                             dblclick: () => {
                                 handleNodePressEnd();
-                                if (['OLT', 'ODF', 'MUFLA', 'CAJA_NAP'].includes(node.node_type))
-                                    onNodeDoubleClick?.(node);
+                                if (node.node_type !== 'CLIENTE_ONU' && activeTool === 'select') {
+                                    setActiveTool('draw_cable');
+                                    setCablePoints([L.latLng(node.location.lat, node.location.lng)]);
+                                    setIsDrawingCable(true);
+                                }
                             },
                         }}
-                    >
-                        <Popup>
-                            <div style={{ minWidth: '140px' }}>
-                                <strong>{node.name}</strong><br />
-                                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{NODE_CONFIG[node.node_type]?.label}</span>
-                                {node.optical_power_dbm !== undefined && (
-                                    <div style={{ marginTop: '4px', fontWeight: 'bold', color: node.optical_power_dbm < -25 ? '#ef4444' : '#10b981' }}>
-                                        Luz: {node.optical_power_dbm} dBm
-                                    </div>
-                                )}
-                                <div style={{ marginTop: '6px' }}>
-                                    <PowerBadgeInline nodeId={node.id} nodeType={node.node_type} />
-                                </div>
-                            </div>
-                        </Popup>
-                    </Marker>
+                    />
                 ))}
 
                 {/* Routes */}
@@ -514,14 +505,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                             positions={route.path.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number])}
                             eventHandlers={{ click: () => setSelectedRoute(route) }}
                             pathOptions={{ color: cfg.color, weight: cfg.weight, opacity: cfg.opacity, dashArray: cfg.dash }}
-                        >
-                            <Popup>
-                                <div>
-                                    <strong>{route.name}</strong><br />
-                                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{cfg.label} — {route.capacity} hilos</span>
-                                </div>
-                            </Popup>
-                        </Polyline>
+                        />
                     );
                 })}
 
