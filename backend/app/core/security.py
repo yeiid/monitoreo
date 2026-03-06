@@ -12,20 +12,25 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "ftth-mapper-super-secret-key-change-in
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "480"))  # 8 horas por defecto
 
+import bcrypt
+
 # Hashing de contraseñas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verificar contraseña plana contra el hash almacenado."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verificar contraseña plana contra el hash almacenado usando bcrypt nativo."""
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), 
+            hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    """Generar un hash bcrypt de la contraseña."""
-    return pwd_context.hash(password)
-
-
+    """Generar un hash bcrypt de la contraseña usando bcrypt nativo."""
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Crear un token JWT con los datos proporcionados."""
     to_encode = data.copy()

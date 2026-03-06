@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+if os.path.exists(env_path):
+    load_dotenv(env_path)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 async def diagnose_and_fix():

@@ -10,7 +10,8 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+if os.path.exists(".env"):
+    load_dotenv()
 
 from .db.session import init_db, get_session
 from .models.auth import User, UserRole

@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 # Importar TODOS los modelos para que SQLModel los registre
 from ..models import Organization, User, Node, Route, FiberStrand, Splitter, Splice  # noqa: F401
 
-# Load .env from backend/ folder
-load_dotenv()
+# Load .env only if it exists (local development)
+if os.path.exists(".env"):
+    load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 

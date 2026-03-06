@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 import sqlalchemy as sa
 from geoalchemy2 import Geometry, Geography
 
-load_dotenv()
+if os.path.exists(".env"):
+    load_dotenv()
 IS_SQLITE = os.getenv("DATABASE_URL", "").startswith("sqlite")
 
 # Use String for geometry data when using SQLite to avoid PostGIS requirements

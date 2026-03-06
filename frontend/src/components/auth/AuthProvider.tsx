@@ -100,7 +100,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 // ── Hook ──
 export const useAuth = () => {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth debe usarse dentro de un AuthProvider');
+    if (!ctx) {
+        // Durante SSR o build, si no hay contexto, devolvemos un objeto seguro para evitar que el build explote
+        if (typeof window === 'undefined') {
+            return {
+                user: null,
+                token: null,
+                isLoading: false,
+                login: async () => ({ success: false }),
+                logout: () => { },
+                authFetch: async () => new Response()
+            } as AuthContextType;
+        }
+        throw new Error('useAuth debe usarse dentro de un AuthProvider');
+    }
     return ctx;
 };
 

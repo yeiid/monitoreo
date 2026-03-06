@@ -30,5 +30,5 @@ if __name__ == "__main__":
         print("⚠️ MAP_DOWNLOAD_URL environment variable not set. Skipping auto-download.")
         sys.exit(0)
     
-    DEST = os.path.join(os.path.dirname(__file__), "maps", "colombia.mbtiles")
+    DEST = os.path.join(os.path.dirname(__file__), "..", "maps", "colombia.mbtiles")
     download_file(MAP_URL, DEST)
