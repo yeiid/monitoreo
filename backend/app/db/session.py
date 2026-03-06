@@ -6,6 +6,9 @@ from sqlalchemy import text
 from sqlmodel import SQLModel
 from dotenv import load_dotenv
 
+# Importar TODOS los modelos para que SQLModel los registre
+from ..models import Organization, User, Node, Route, FiberStrand, Splitter, Splice  # noqa: F401
+
 # Load .env from backend/ folder
 load_dotenv()
 

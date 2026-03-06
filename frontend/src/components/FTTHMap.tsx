@@ -5,6 +5,7 @@
  * All UI is delegated to /map sub-components.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../utils/apiFetch';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -93,7 +94,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
     const fetchNodes = useCallback(async () => {
         try {
             console.log(`[Nodes] Fetching from ${API_BASE}/nodes...`);
-            const res = await fetch(`${API_BASE}/nodes`);
+            const res = await apiFetch(`${API_BASE}/nodes`);
             if (res.ok) {
                 const data = await res.json();
                 setNodes(data);
@@ -109,7 +110,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
     const fetchRoutes = useCallback(async () => {
         try {
             console.log(`[Routes] Fetching from ${API_BASE}/routes...`);
-            const res = await fetch(`${API_BASE}/routes`);
+            const res = await apiFetch(`${API_BASE}/routes`);
             if (res.ok) {
                 const data = await res.json();
                 setRoutes(data);
@@ -158,7 +159,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
             location: { lat: pendingLocation.lat, lng: pendingLocation.lng },
         };
         try {
-            const res = await fetch(`${API_BASE}/nodes`, {
+            const res = await apiFetch(`${API_BASE}/nodes`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
@@ -245,7 +246,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
 
         setIsSaving(true);
         try {
-            const res = await fetch(`${API_BASE}/continuous-trace`, {
+            const res = await apiFetch(`${API_BASE}/continuous-trace`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
@@ -287,7 +288,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
             path: { coordinates: cablePoints.map(p => [p.lng, p.lat]) },
         };
         try {
-            const res = await fetch(`${API_BASE}/routes`, {
+            const res = await apiFetch(`${API_BASE}/routes`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
@@ -305,14 +306,14 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
 
     // ── Delete ──
     const handleDeleteNode = async (nodeId: string) => {
-        try { await fetch(`${API_BASE}/nodes/${nodeId}`, { method: 'DELETE' }); } catch { }
+        try { await apiFetch(`${API_BASE}/nodes/${nodeId}`, { method: 'DELETE' }); } catch { }
         setNodes(prev => prev.filter(n => n.id !== nodeId));
         setRoutes(prev => prev.filter(r => r.start_node_id !== nodeId && r.end_node_id !== nodeId));
         setSelectedNode(null);
     };
 
     const handleDeleteRoute = async (routeId: string) => {
-        try { await fetch(`${API_BASE}/routes/${routeId}`, { method: 'DELETE' }); } catch { }
+        try { await apiFetch(`${API_BASE}/routes/${routeId}`, { method: 'DELETE' }); } catch { }
         setRoutes(prev => prev.filter(r => r.id !== routeId));
         setSelectedRoute(null);
     };

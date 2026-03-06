@@ -9,30 +9,47 @@ from sqlalchemy import func, cast
 
 from ....db.session import get_session
 from ....models.network import Node, Route, FiberStrand, Splitter, Splice
+from ....models.auth import User
 from ....schemas.network import (
     NodeCreate, NodeRead, NodeUpdate,
     ContinuousTraceRequest, ContinuousTraceResponse,
     RouteCreate
 )
+from ..deps import get_current_user, get_org_filter
 
 from typing import List, Optional, Any
 
 router = APIRouter()
 
 @router.get("", response_model=List[NodeRead])
-async def list_nodes(node_type: str = None, session: AsyncSession = Depends(get_session)):
+async def list_nodes(
+    node_type: str = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     statement = select(Node)
+    # Filtrar por organización del usuario
+    org_id = get_org_filter(current_user)
+    if org_id:
+        statement = statement.where(Node.organization_id == org_id)
     if node_type:
         statement = statement.where(Node.node_type == node_type)
     results = await session.execute(statement)
     return results.scalars().all()
 
 @router.post("", response_model=NodeRead, status_code=status.HTTP_201_CREATED)
-async def create_node(data: NodeCreate, session: AsyncSession = Depends(get_session)):
+async def create_node(
+    data: NodeCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     node_data = data.model_dump()
     if node_data.get("location"):
         loc = node_data["location"]
         node_data["location"] = f"POINT({loc['lng']} {loc['lat']})"
+    # Asignar organización y creador
+    node_data["organization_id"] = current_user.organization_id
+    node_data["created_by"] = current_user.id
     db_node = Node(**node_data)
     session.add(db_node)
     await session.commit()

@@ -8,12 +8,18 @@ from sqlalchemy import func, cast
 
 from ....db.session import get_session
 from ....models.network import Route, FiberStrand
+from ....models.auth import User
 from ....schemas.network import RouteCreate, RouteRead, RouteUpdate
+from ..deps import get_current_user, get_org_filter
 
 router = APIRouter()
 
 @router.post("", response_model=RouteRead, status_code=status.HTTP_201_CREATED)
-async def create_route(data: RouteCreate, session: AsyncSession = Depends(get_session)):
+async def create_route(
+    data: RouteCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     route_data = data.model_dump()
     if route_data.get("path"):
         coords = route_data["path"]["coordinates"]
@@ -40,7 +46,11 @@ async def create_route(data: RouteCreate, session: AsyncSession = Depends(get_se
     return db_route
 
 @router.get("", response_model=List[RouteRead])
-async def list_routes(node_id: str = None, session: AsyncSession = Depends(get_session)):
+async def list_routes(
+    node_id: str = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     statement = select(Route, func.ST_Length(cast(Route.path, Geography)))
     if node_id:
         statement = statement.where((Route.start_node_id == node_id) | (Route.end_node_id == node_id))

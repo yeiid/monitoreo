@@ -1,22 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
-import MapApp from "../components/MapApp";
+import AppShell from "../components/AppShell";
 ---
 
 <Layout title="FTTH Mapper - Diseño de Planta Externa">
-	<main class="dashboard-container">
-		<Sidebar client:load />
-
-		<div class="main-content">
-			<Header client:load />
-
-			<div class="map-full-container">
-				<MapApp client:only="react" />
-			</div>
-		</div>
-	</main>
+	<AppShell client:only="react" />
 </Layout>
 
 <style>

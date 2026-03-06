@@ -67,6 +67,11 @@ class Node(BaseModel, table=True):
     node_type: str = Field(index=True)  # Values from NodeType enum
     description: Optional[str] = None
 
+    # Multi-tenant: cada nodo pertenece a una organización
+    organization_id: Optional[uuid.UUID] = Field(default=None, foreign_key="organizations.id", index=True)
+    # Auditoría: quién creó este nodo
+    created_by: Optional[uuid.UUID] = Field(default=None, foreign_key="users.id")
+
     # Optical power measurement (dBm) - for MUFLA / NAP auditing
     optical_power_dbm: Optional[float] = Field(default=None)
 
@@ -114,6 +119,11 @@ class Route(BaseModel, table=True):
     route_type: str = Field(default="TRONCAL")  # TRONCAL, DISTRIBUCION, ACOMETIDA
     capacity: int = Field(default=12)  # Number of fiber strands in the cable (6, 12, 24, 48...)
     description: Optional[str] = None
+
+    # Multi-tenant: cada ruta pertenece a una organización
+    organization_id: Optional[uuid.UUID] = Field(default=None, foreign_key="organizations.id", index=True)
+    # Auditoría: quién creó esta ruta
+    created_by: Optional[uuid.UUID] = Field(default=None, foreign_key="users.id")
 
     # OLT origin - which card/port this cable leaves from
     source_card: Optional[int] = Field(default=None)

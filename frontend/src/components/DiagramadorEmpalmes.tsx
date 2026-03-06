@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import { apiFetch } from '../utils/apiFetch';
 import {
   ReactFlow,
   MiniMap,
@@ -283,9 +284,9 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
       try {
         console.log("Fetching diagram data for node:", node.id);
         const [rRes, sRes, spRes] = await Promise.all([
-          fetch(`${API_BASE}/routes/?node_id=${node.id}`), // Added trailing slash
-          fetch(`${API_BASE}/fiber/splitters?node_id=${node.id}`),
-          fetch(`${API_BASE}/fiber/splices?node_id=${node.id}`)
+          apiFetch(`${API_BASE}/routes/?node_id=${node.id}`),
+          apiFetch(`${API_BASE}/fiber/splitters?node_id=${node.id}`),
+          apiFetch(`${API_BASE}/fiber/splices?node_id=${node.id}`)
         ]);
 
         if (!rRes.ok || !sRes.ok || !spRes.ok) throw new Error("Error al cargar datos.");
@@ -302,7 +303,7 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
         const strandsByRoute: Record<string, any[]> = {};
         await Promise.all(routes.map(async (r: any) => {
           try {
-            const stRes = await fetch(`${API_BASE}/fiber/strands?route_id=${r.id}`);
+            const stRes = await apiFetch(`${API_BASE}/fiber/strands?route_id=${r.id}`);
             if (stRes.ok) {
               const data = await stRes.json();
               strandsByRoute[r.id] = Array.isArray(data) ? data : [];
@@ -584,7 +585,7 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
     };
 
     try {
-      const res = await fetch(`${API_BASE}/nodes/${node.id}/sync-splices`, {
+      const res = await apiFetch(`${API_BASE}/nodes/${node.id}/sync-splices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

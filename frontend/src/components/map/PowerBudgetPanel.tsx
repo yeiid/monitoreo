@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { API_BASE } from './types';
+import { apiFetch } from '../../utils/apiFetch';
 
 // ── Thresholds (must match backend) ──
 const POWER_EXCELLENT = -24.0; // > -24 → green
@@ -56,7 +57,7 @@ export function PowerBadgeInline({ nodeId, nodeType }: { nodeId: string; nodeTyp
 
     useEffect(() => {
         if (!['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(nodeType)) return;
-        fetch(`${API_BASE}/power-budget/${nodeId}`)
+        apiFetch(`${API_BASE}/power-budget/${nodeId}`)
             .then(r => r.json())
             .then(d => { setPower(d.received_power_dbm); setLevel(d.level); })
             .catch(() => setLevel('error'));
@@ -92,7 +93,7 @@ export function PowerBudgetPanel({ nodeId, nodeName, onClose }: {
 
     useEffect(() => {
         setLoading(true); setError(null);
-        fetch(`${API_BASE}/power-budget/${nodeId}`)
+        apiFetch(`${API_BASE}/power-budget/${nodeId}`)
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => { setData(d); setLoading(false); })
             .catch(e => { setError(e.message); setLoading(false); });

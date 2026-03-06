@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../utils/apiFetch';
 import { X, Server, CheckCircle, Circle, AlertCircle } from 'lucide-react';
 
 interface GestorODFProps {
@@ -43,7 +44,7 @@ const GestorODF: React.FC<GestorODFProps> = ({ node, onClose }) => {
     const loadConnections = useCallback(async () => {
         setLoading(true);
         try {
-            const routesRes = await fetch(`${API_BASE}/routes`);
+            const routesRes = await apiFetch(`${API_BASE}/routes`);
             if (!routesRes.ok) return;
             const allRoutes: ConnectedRoute[] = await routesRes.json();
 
@@ -59,7 +60,7 @@ const GestorODF: React.FC<GestorODFProps> = ({ node, onClose }) => {
             await Promise.all(
                 uniqueSourceIds.map(async (id) => {
                     try {
-                        const res = await fetch(`${API_BASE}/nodes/${id}`);
+                        const res = await apiFetch(`${API_BASE}/nodes/${id}`);
                         if (res.ok) {
                             const n: NodeInfo = await res.json();
                             nodeMap[id] = n;
