@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './AuthProvider';
+import { useAuth, AuthProvider } from './AuthProvider';
 
 const LoginForm: React.FC = () => {
     const { login } = useAuth();
@@ -112,4 +112,13 @@ const LoginForm: React.FC = () => {
     );
 };
 
+export const LoginApp: React.FC = () => {
+    return (
+        <AuthProvider>
+            <LoginForm />
+        </AuthProvider>
+    );
+};
+
 export default LoginForm;
+

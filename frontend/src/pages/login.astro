@@ -1,26 +1,17 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import LoginApp from "../components/auth/LoginApp.tsx";
 ---
 
 <Layout title="FTTH Mapper - Iniciar Sesión">
-    <div id="login-root"></div>
+    <script>
+        // Check session before rendering
+        if (localStorage.getItem("ftth_token")) {
+            window.location.href = "/";
+        }
+    </script>
+    <LoginApp client:only="react" />
 </Layout>
-
-<script>
-    import { createElement } from "react";
-    import { createRoot } from "react-dom/client";
-    import { AuthProvider } from "../components/auth/AuthProvider";
-    import LoginForm from "../components/auth/LoginForm";
-
-    // Verificar si ya hay sesión
-    const token = localStorage.getItem("ftth_token");
-    if (token) {
-        window.location.href = "/";
-    }
-
-    const root = createRoot(document.getElementById("login-root")!);
-    root.render(createElement(AuthProvider, null, createElement(LoginForm)));
-</script>
 
 <style is:global>
     /* ── Login Page Styles ── */

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, ChevronRight, Globe, Navigation } from 'lucide-react';
+import { MapPin, ChevronRight, Globe, Navigation, X } from 'lucide-react';
 import locationData from '../data/locations.json';
 
 interface Municipality {
@@ -23,9 +23,10 @@ interface Country {
 
 interface LocationSelectorProps {
     onLocationSelect: (location: { center: [number, number]; zoom: number }) => void;
+    onClose: () => void;
 }
 
-const LocationSelector: React.FC<LocationSelectorProps> = ({ onLocationSelect }) => {
+const LocationSelector: React.FC<LocationSelectorProps> = ({ onLocationSelect, onClose }) => {
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
     const [selectedMuni, setSelectedMuni] = useState<Municipality | null>(null);
@@ -44,12 +45,15 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({ onLocationSelect })
     return (
         <div className="location-selector-overlay">
             <div className="location-selector-card glass-morphism animate-in fade-in zoom-in duration-300">
+                <button className="close-btn" onClick={onClose} title="Cerrar">
+                    <X size={20} />
+                </button>
                 <div className="selector-header">
                     <div className="icon-badge">
                         <MapPin size={24} color="#8b5cf6" />
                     </div>
-                    <h2>Plataforma de Diseño FTTH</h2>
-                    <p>Selecciona la ubicación de operación para comenzar</p>
+                    <h2>Ir a Ubicación</h2>
+                    <p>Salta rápidamente a otra zona del mapa</p>
                 </div>
 
                 <div className="selector-body">
@@ -115,7 +119,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({ onLocationSelect })
                     disabled={!selectedMuni}
                     onClick={handleSelect}
                 >
-                    <span>Abrir Mapa de Red</span>
+                    <span>Ir a Ubicación</span>
                     <ChevronRight size={18} />
                 </button>
             </div>
@@ -136,11 +140,36 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({ onLocationSelect })
                 }
 
                 .location-selector-card {
-                    width: 440px;
+                    position: relative;
+                    width: 90%;
+                    max-width: 440px;
                     padding: 40px;
                     text-align: center;
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                    background: rgba(17, 24, 39, 0.85);
+                }
+
+                .close-btn {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: none;
+                    color: var(--text-muted);
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+
+                .close-btn:hover {
+                    background: rgba(239, 68, 68, 0.2);
+                    color: #fca5a5;
                 }
 
                 .icon-badge {

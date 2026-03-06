@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cable, MousePointer } from 'lucide-react';
+import { Cable, MousePointer, MapPin } from 'lucide-react';
 import type { DrawingTool } from './types';
 import { NODE_CONFIG } from './types';
 
@@ -11,6 +11,7 @@ interface MapToolbarProps {
     cablePointCount: number;
     onFinishCable: () => void;
     onCancelCable: () => void;
+    onOpenLocationSelector?: () => void;
 }
 
 const MapToolbar: React.FC<MapToolbarProps> = ({
@@ -21,6 +22,7 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
     cablePointCount,
     onFinishCable,
     onCancelCable,
+    onOpenLocationSelector,
 }) => {
     return (
         <div className="map-toolbar">
@@ -29,6 +31,14 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
                 onClick={() => setActiveTool('select')}
             >
                 <MousePointer size={16} /> <span className="desktop-only">Seleccionar</span>
+            </button>
+
+            <button
+                className="toolbar-btn"
+                onClick={onOpenLocationSelector}
+                title="Cambiar Ubicación"
+            >
+                <MapPin size={16} /> <span className="desktop-only">Ubicación</span>
             </button>
 
             <div className="nav-section-title desktop-only" style={{ padding: '10px 4px 4px' }}>

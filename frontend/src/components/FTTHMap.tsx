@@ -49,9 +49,10 @@ interface FTTHMapProps {
     center: [number, number];
     zoom: number;
     onNodeDoubleClick?: (node: NodeData) => void;
+    onOpenLocationSelector?: () => void;
 }
 
-const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) => {
+const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOpenLocationSelector }) => {
     // ── State ──
     const [nodes, setNodes] = useState<NodeData[]>(() => {
         if (typeof window !== 'undefined') {
@@ -89,6 +90,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
     const [showTerminationModal, setShowTerminationModal] = useState(false);
     const [clientForm, setClientForm] = useState({ name: '', address: '', contract: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
 
     // ── Data fetching ──
     const fetchNodes = useCallback(async () => {
@@ -175,6 +177,37 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
         setShowAddForm(false); setPendingLocation(null); setActiveTool('select');
     };
 
+    // ── Hierarchy Validation ──
+    const isValidConnection = (startType: string, endType: string): boolean => {
+        const rules: Record<string, string[]> = {
+            'OLT': ['ODF', 'MUFLA'],
+            'ODF': ['MUFLA'],
+            'MUFLA': ['MUFLA', 'CAJA_NAP'],
+            'CAJA_NAP': ['CLIENTE_ONU'],
+            'CLIENTE_ONU': []
+        };
+        return rules[startType]?.includes(endType) || false;
+    };
+
+    // ── Long Press Logic ──
+    const handleNodePressStart = (node: NodeData, latlng: L.LatLng) => {
+        if (node.node_type === 'CLIENTE_ONU' || activeTool !== 'select') return;
+        const timer = setTimeout(() => {
+            setActiveTool('draw_cable');
+            setCablePoints([L.latLng(node.location.lat, node.location.lng)]);
+            setIsDrawingCable(true);
+            if (window.navigator?.vibrate) window.navigator.vibrate(50);
+        }, 500);
+        setPressTimer(timer);
+    };
+
+    const handleNodePressEnd = () => {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            setPressTimer(null);
+        }
+    };
+
     // ── Cable drawing helpers ──
     const snapToNode = (latlng: L.LatLng): { latlng: L.LatLng; node?: NodeData } => {
         const nearest = nodes.find(n => {
@@ -209,7 +242,17 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
         if (cablePoints.length < 2) return;
         const lastPt = cablePoints[cablePoints.length - 1];
         const endNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lastPt.lat, 2) + Math.pow(n.location.lng - lastPt.lng, 2)) < 0.0001);
-        endNode ? setShowCableForm(true) : setShowTerminationModal(true);
+
+        const startNode = getStartNode();
+        if (startNode && endNode) {
+            if (!isValidConnection(startNode.node_type, endNode.node_type)) {
+                alert(`❌ Jerarquía inválida: No se puede conectar un ${startNode.node_type} hacia un ${endNode.node_type}.`);
+                return;
+            }
+            setShowCableForm(true);
+        } else {
+            setShowTerminationModal(true);
+        }
     };
 
     const cancelCable = () => { setCablePoints([]); setIsDrawingCable(false); setShowCableForm(false); setActiveTool('select'); };
@@ -228,6 +271,10 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
         if (cablePoints.length < 2) return;
         const startNode = getStartNode();
         if (!startNode) return alert('❌ El cable debe nacer desde un nodo existente.');
+
+        if (!isValidConnection(startNode.node_type, targetType)) {
+            return alert(`❌ Jerarquía inválida: No se puede conectar un ${startNode.node_type} hacia un ${targetType}.`);
+        }
 
         const routeType = classifyRoute(startNode.node_type, targetType);
         const nodeName = targetType === 'CLIENTE_ONU'
@@ -334,6 +381,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
                 cablePointCount={cablePoints.length}
                 onFinishCable={finishCable}
                 onCancelCable={cancelCable}
+                onOpenLocationSelector={onOpenLocationSelector}
             />
 
             {/* Stats */}
@@ -423,8 +471,18 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick }) =>
                         position={[node.location.lat, node.location.lng]}
                         icon={createNodeIcon(node.node_type)}
                         eventHandlers={{
-                            click: () => setSelectedNode(node),
+                            mousedown: (e) => handleNodePressStart(node, e.latlng),
+                            mouseup: handleNodePressEnd,
+                            mouseout: handleNodePressEnd,
+                            touchstart: (e) => handleNodePressStart(node, e.latlng),
+                            touchend: handleNodePressEnd,
+                            touchcancel: handleNodePressEnd,
+                            click: () => {
+                                handleNodePressEnd();
+                                setSelectedNode(node);
+                            },
                             dblclick: () => {
+                                handleNodePressEnd();
                                 if (['OLT', 'ODF', 'MUFLA', 'CAJA_NAP'].includes(node.node_type))
                                     onNodeDoubleClick?.(node);
                             },
