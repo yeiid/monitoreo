@@ -37,6 +37,7 @@ services:
       dockerfile: ./frontend/Dockerfile
       args:
         - PUBLIC_API_URL=${PUBLIC_API_URL}
+        - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL}
     container_name: monitoreo_web
     restart: unless-stopped
     expose:

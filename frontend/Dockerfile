@@ -2,9 +2,11 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Accept API URL as a build argument
+# Accept API and Map URLs as build arguments
 ARG PUBLIC_API_URL
+ARG PUBLIC_MAP_TILE_URL
 ENV PUBLIC_API_URL=$PUBLIC_API_URL
+ENV PUBLIC_MAP_TILE_URL=$PUBLIC_MAP_TILE_URL
 
 COPY frontend/package*.json ./
 RUN npm install
