@@ -28,7 +28,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./backend/maps:/app/maps
+      - /var/lib/monitoreo/maps:/app/maps
 
   # 💻 Web Frontend
   web:
@@ -48,7 +48,7 @@ services:
     container_name: monitoreo_tileserver
     restart: unless-stopped
     volumes:
-      - ./backend/maps:/data
+      - /var/lib/monitoreo/maps:/data
     expose:
       - "8080"
     command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]
