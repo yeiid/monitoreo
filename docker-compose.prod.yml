@@ -51,4 +51,4 @@ services:
       - /var/www/maps:/data
     expose:
       - "8080"
-    command: [ "-p", "8080", "--mbtiles", "colombia.mbtiles" ]
+    command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]

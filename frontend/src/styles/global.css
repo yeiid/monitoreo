@@ -427,6 +427,26 @@ button:active {
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
+/* Mobile: info panel becomes bottom-sheet */
+@media (max-width: 768px) {
+  .info-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 45vh;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 20px;
+    animation: slideUpPanel 0.25s ease;
+  }
+}
+
+@keyframes slideUpPanel {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .info-panel h3 {
   font-size: 0.95rem;
   color: white;
@@ -452,6 +472,16 @@ button:active {
 .info-item .value {
   color: white;
   font-weight: 500;
+}
+
+/* Mobile: toolbar touch targets */
+@media (max-width: 768px) {
+  .toolbar-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 12px;
+    justify-content: center;
+  }
 }
 
 /* ── Modal Overlay ── */
@@ -672,42 +702,56 @@ button:active {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* ── Leaflet Overrides ── */
-.leaflet-container {
-  background: var(--bg-color) !important;
-  font-family: 'Inter', sans-serif !important;
-}
-
-.leaflet-control-zoom {
+/* ── MapLibre GL Overrides ── */
+.maplibregl-ctrl-group {
+  background: rgba(10, 10, 16, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 12px !important;
   overflow: hidden;
 }
 
-.leaflet-control-zoom a {
-  background: rgba(10, 10, 16, 0.9) !important;
-  color: var(--text-main) !important;
-  border-color: var(--border-color) !important;
+.maplibregl-ctrl-group button {
+  width: 36px !important;
+  height: 36px !important;
+  border-bottom: 1px solid var(--border-color) !important;
 }
 
-.leaflet-control-zoom a:hover {
-  background: rgba(139, 92, 246, 0.2) !important;
+.maplibregl-ctrl-group button:last-child {
+  border-bottom: none !important;
 }
 
-.leaflet-popup-content-wrapper {
+.maplibregl-ctrl-group button span {
+  filter: invert(1);
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: rgba(139, 92, 246, 0.15) !important;
+}
+
+.maplibregl-popup-content {
   background: rgba(10, 10, 16, 0.95) !important;
   color: var(--text-main) !important;
   border-radius: 14px !important;
   border: 1px solid var(--border-color) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  padding: 12px 16px !important;
 }
 
-.leaflet-popup-tip {
-  background: rgba(10, 10, 16, 0.95) !important;
+.maplibregl-popup-tip {
+  border-top-color: rgba(10, 10, 16, 0.95) !important;
+  border-bottom-color: rgba(10, 10, 16, 0.95) !important;
 }
 
-.leaflet-popup-close-button {
+.maplibregl-popup-close-button {
   color: var(--text-muted) !important;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+
+.maplibregl-popup-close-button:hover {
+  background: transparent !important;
+  color: white !important;
 }
 
 /* ── Form Controls inside map ── */

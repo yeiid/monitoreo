@@ -51,29 +51,35 @@ async def list_routes(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    statement = select(Route, func.ST_Length(cast(Route.path, Geography)))
+    import json
+    statement = select(Route, func.ST_Length(cast(Route.path, Geography)), func.ST_AsGeoJSON(Route.path))
     if node_id:
         statement = statement.where((Route.start_node_id == node_id) | (Route.end_node_id == node_id))
     statement = statement.order_by(Route.name)
     results = await session.execute(statement)
     
     routes = []
-    for db_route, length in results.all():
+    for db_route, length, geojson_str in results.all():
         db_route.length_meters = length
+        if geojson_str:
+            db_route.path = json.loads(geojson_str)
         routes.append(db_route)
     return routes
 
 @router.get("/{route_id}", response_model=RouteRead)
 async def get_route(route_id: str, session: AsyncSession = Depends(get_session)):
+    import json
     result = await session.execute(
-        select(Route, func.ST_Length(cast(Route.path, Geography))).where(Route.id == route_id)
+        select(Route, func.ST_Length(cast(Route.path, Geography)), func.ST_AsGeoJSON(Route.path)).where(Route.id == route_id)
     )
     data = result.one_or_none()
     if not data:
         raise HTTPException(status_code=404, detail="Route not found")
     
-    db_route, length = data
+    db_route, length, geojson_str = data
     db_route.length_meters = length
+    if geojson_str:
+        db_route.path = json.loads(geojson_str)
     return db_route
 
 @router.put("/{route_id}", response_model=RouteRead)

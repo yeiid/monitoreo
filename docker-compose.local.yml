@@ -53,7 +53,7 @@ services:
       - ./backend/maps:/data
     ports:
       - "8080:8080"
-    command: [ "-p", "8080", "--mbtiles", "colombia.mbtiles" ]
+    command: [ "-p", "8080", "-c", "tileserver-config.json" ]
 
 volumes:
   postgres_data_local:

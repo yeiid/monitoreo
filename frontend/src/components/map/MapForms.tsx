@@ -1,12 +1,11 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
-import L from 'leaflet';
 import { NODE_CONFIG } from './types';
 
 // ── Add Node Form Modal ──
 interface AddNodeFormProps {
     pendingNodeType: string;
-    pendingLocation: L.LatLng | null;
+    pendingLocation: { lat: number; lng: number } | null;
     formName: string;
     setFormName: (v: string) => void;
     formDescription: string;

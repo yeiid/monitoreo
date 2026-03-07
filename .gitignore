@@ -31,6 +31,8 @@ postgres_data/
 logs/
 *.log
 
-# Maps (Uploaded directly to VPS)
-backend/maps/colombia.mbtiles
-backend/maps/colombia.osm.pbf
+# Maps and Data Tools (Uploaded directly to VPS, do not commit!)
+*.mbtiles
+*.osm.pbf
+planetiler.jar
+backend/maps/data/

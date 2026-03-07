@@ -19,6 +19,7 @@ class NodeBase(BaseModel):
     node_type: str  # OLT, MUFLA, CAJA_NAP, CLIENTE_ONU
     description: Optional[str] = None
     optical_power_dbm: Optional[float] = None
+    status: str = "online"
     hardware_details: Optional[Dict[str, Any]] = None
     location: Optional[LocationPoint] = None
 
@@ -30,6 +31,7 @@ class NodeUpdate(BaseModel):
     node_type: Optional[str] = None
     description: Optional[str] = None
     optical_power_dbm: Optional[float] = None
+    status: Optional[str] = None
     hardware_details: Optional[Dict[str, Any]] = None
     location: Optional[LocationPoint] = None
 

@@ -75,6 +75,9 @@ class Node(BaseModel, table=True):
 
     # Optical power measurement (dBm) - for MUFLA / NAP auditing
     optical_power_dbm: Optional[float] = Field(default=None)
+    
+    # Status for dynamic coloring: 'online', 'offline', 'warning'
+    status: str = Field(default="online", index=True)
 
     # Hardware details (JSONB) - for OLT: {"cards": 5, "ports_per_card": 16}
     hardware_details: Optional[dict] = Field(

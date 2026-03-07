@@ -2,24 +2,38 @@ import React from 'react';
 import { Cable, Eye, Trash2 } from 'lucide-react';
 import type { NodeData, RouteData } from './types';
 import { NODE_CONFIG, ROUTE_CONFIG } from './types';
-
 // ── Node Info Panel ──
 interface NodeInfoPanelProps {
     node: NodeData;
     onClose: () => void;
     onDelete: (id: string) => void;
     onInspect: (node: NodeData) => void;
+    onAddChild?: (node: NodeData, childType: string) => void;
 }
 
-export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onDelete, onInspect }) => {
+const HIERARCHY: Record<string, string> = {
+    'OLT': 'MUFLA',
+    'MUFLA': 'CAJA_NAP',
+    'CAJA_NAP': 'CLIENTE_ONU'
+};
+
+export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onDelete, onInspect, onAddChild }) => {
     const cfg = NODE_CONFIG[node.node_type];
     const showInspect = ['OLT', 'ODF', 'MUFLA', 'CAJA_NAP'].includes(node.node_type);
+    const childType = HIERARCHY[node.node_type];
+    const childCfg = childType ? NODE_CONFIG[childType] : null;
 
     return (
         <div className="info-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0 }}>
-                    <span style={{ color: cfg?.color }}>{cfg?.icon}</span>{' '}
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {cfg?.iconUrl ? (
+                        <img src={cfg.iconUrl} alt={cfg.label} style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+                    ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={cfg?.color || 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path dangerouslySetInnerHTML={{ __html: cfg?.svgPath || '' }} />
+                        </svg>
+                    )}
                     {node.name}
                 </h3>
                 <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }} onClick={onClose}>✕</button>
@@ -63,9 +77,20 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
                 </div>
             )}
 
-            <div className="info-panel-actions" style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <div className="info-panel-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+                {childType && (
+                    <button
+                        className="primary-btn"
+                        style={{ flex: '1 1 100%', background: childCfg?.color }}
+                        onClick={() => onAddChild?.(node, childType)}
+                    >
+                        <Cable size={14} style={{ marginRight: '6px' }} />
+                        Añadir {childCfg?.label}
+                    </button>
+                )}
+
                 {showInspect && (
-                    <button className="primary-btn" style={{ flex: 1 }} onClick={() => onInspect(node)}>
+                    <button className="secondary-btn" style={{ flex: 1 }} onClick={() => onInspect(node)}>
                         <Eye size={14} style={{ marginRight: '6px' }} />
                         <span className="desktop-only">{node.node_type === 'OLT' ? 'Gestionar OLT' : node.node_type === 'ODF' ? 'Ver ODF' : 'Ver Empalmes'}</span>
                         <span className="mobile-only">Gestionar</span>

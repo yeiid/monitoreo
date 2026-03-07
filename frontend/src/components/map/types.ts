@@ -8,6 +8,7 @@ export interface NodeData {
     node_type: string;
     description?: string;
     optical_power_dbm?: number;
+    status: 'online' | 'offline' | 'warning';
     hardware_details?: Record<string, any>;
     location: { lat: number; lng: number };
 }
@@ -41,16 +42,36 @@ export type DrawingTool =
 export interface NodeConfigItem {
     color: string;
     label: string;
-    icon: string;
-    shape: 'square' | 'rhombus' | 'circle' | 'triangle';
+    svgPath: string; // Inner SVG content (fallback)
+    iconUrl?: string; // New custom icon URL
 }
 
 export const NODE_CONFIG: Record<string, NodeConfigItem> = {
-    OLT: { color: '#ef4444', label: 'OLT', icon: '📡', shape: 'square' },
-    ODF: { color: '#6b7280', label: 'ODF', icon: '🔩', shape: 'square' },
-    MUFLA: { color: '#f97316', label: 'Mufla', icon: '🔶', shape: 'rhombus' },
-    CAJA_NAP: { color: '#3b82f6', label: 'NAP', icon: '📦', shape: 'triangle' },
-    CLIENTE_ONU: { color: '#10b981', label: 'Cliente', icon: '🏠', shape: 'circle' },
+    OLT: {
+        color: '#ef4444', label: 'OLT',
+        svgPath: '<path d="M12 2L2 22h20L12 2z" stroke-width="1.5"/><circle cx="12" cy="12" r="3" stroke-width="1.5"/><path d="M12 18v4" stroke-width="1.5"/>',
+        iconUrl: '/otl-negra.svg'
+    },
+    ODF: {
+        color: '#6b7280', label: 'ODF',
+        svgPath: '<rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.5"/><path d="M3 9h18M3 15h18M7 6h2M7 12h2M7 18h2" stroke-width="1.5"/>',
+        iconUrl: '/odf.svg'
+    },
+    MUFLA: {
+        color: '#f97316', label: 'Mufla',
+        svgPath: '<path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z" stroke-width="1.5"/><circle cx="12" cy="12" r="4" stroke-width="1.5"/>',
+        iconUrl: '/mucfla1-negra.svg'
+    },
+    CAJA_NAP: {
+        color: '#3b82f6', label: 'NAP',
+        svgPath: '<rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2"/><path d="M9 9h6v6H9z" fill="currentColor" opacity="0.4"/><path d="M12 4v4m-8 8h4m12 0h-4M12 20v-4" stroke-width="1.5"/>',
+        iconUrl: '/nap.svg'
+    },
+    CLIENTE_ONU: {
+        color: '#10b981', label: 'Cliente',
+        svgPath: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" stroke-width="1.5"/><path d="M9 22V12h6v10" stroke-width="1.5"/>',
+        iconUrl: '/home.svg'
+    },
 };
 
 export interface RouteConfigItem {
@@ -109,7 +130,7 @@ export const API_BASE = RawAPI;
 
 // 2. TileServer configuration
 export const MAP_TILE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_TILE_URL)
-    || 'https://tiles.neuraljira.tech/styles/basic-preview/512/{z}/{x}/{y}.png';
+    || 'http://localhost:8080/styles/basic/style.json';
 
 export const TILES_ATTRIBUTION = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_ATTRIBUTION)
     || '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';

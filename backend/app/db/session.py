@@ -57,6 +57,13 @@ async def init_db():
                 if not IS_SQLITE:
                     # Enable PostGIS extension only on PostgreSQL
                     await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+                    # Spatial indexes for fast geo queries
+                    await conn.execute(text(
+                        "CREATE INDEX IF NOT EXISTS idx_nodes_location_gist ON nodes USING GIST (location);"
+                    ))
+                    await conn.execute(text(
+                        "CREATE INDEX IF NOT EXISTS idx_routes_path_gist ON routes USING GIST (path);"
+                    ))
                 await conn.run_sync(SQLModel.metadata.create_all)
             print("✅ Database initialized successfully.")
             return
