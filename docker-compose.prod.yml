@@ -49,10 +49,10 @@ services:
       - "coolify.managed=true"
       - "coolify.service.port=80"
 
-  # 🗺️ TileServer GL
-  tileserver:
+  # 🗺️ Map Server (TileServer GL)
+  mapserver:
     image: maptiler/tileserver-gl:latest
-    container_name: monitoreo_tileserver
+    container_name: monitoreo_mapserver
     restart: unless-stopped
     volumes:
       - /var/lib/monitoreo/maps:/data
