@@ -1,11 +1,9 @@
-node_modules/
-dist/
-.env
-.env.*
+*.mbtiles
+*.osm.pbf
+data/
 .git/
 .gitignore
 Dockerfile
 docker-compose*
 backend/
-maps/
-README.md
+frontend/

@@ -1,14 +1,23 @@
-# 🗺️ Dockerfile para el Servidor de Mapas (TileServer GL)
+# 🗺️ optimized Map Server (TileServer GL)
 FROM maptiler/tileserver-gl:latest
 
-# Copiar configuración y activos de mapas
-COPY ./tileserver-config.json /data/tileserver-config.json
-COPY ./styles /data/styles
-COPY ./fonts /data/fonts
+# Set working directory
+WORKDIR /data
 
-# Nota: El archivo .mbtiles se montará vía volumen para persistencia y tamaño
-# o se puede copiar aquí si es pequeño, pero en este proyecto preferimos volúmenes.
+# Copy configuration and assets
+# We copy them so the container can run standalone if needed
+COPY tileserver-config.json .
+COPY styles ./styles
+COPY fonts ./fonts
 
+# Note: .mbtiles files should still be mounted as volumes for size/persistence
+# but we expose the standard port
 EXPOSE 8080
 
-CMD ["-p", "8080", "-c", "/data/tileserver-config.json"]
+# Healthcheck for the map server
+HEALTHCHECK --interval=1m --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Start command
+ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
+CMD ["-p", "8080", "-c", "tileserver-config.json"]

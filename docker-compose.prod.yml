@@ -51,7 +51,9 @@ services:
 
   # 🗺️ Map Server (TileServer GL)
   mapserver:
-    image: maptiler/tileserver-gl:latest
+    build:
+      context: ./maps
+      dockerfile: Dockerfile
     container_name: monitoreo_mapserver
     restart: unless-stopped
     volumes:

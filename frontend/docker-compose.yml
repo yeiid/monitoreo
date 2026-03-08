@@ -1,0 +1,12 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: ./frontend/Dockerfile
+      args:
+        - PUBLIC_API_URL=${PUBLIC_API_URL:-https://api.neuraljira.tech}
+        - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL:-/tiles/}
+    container_name: monitoreo_web_standalone
+    restart: unless-stopped
+    ports:
+      - "3000:80"
