@@ -35,4 +35,5 @@ logs/
 *.mbtiles
 *.osm.pbf
 planetiler.jar
+maps/data/
 backend/maps/data/

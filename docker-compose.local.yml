@@ -28,7 +28,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./backend/maps:/app/maps
+      - ./maps:/app/maps
 
   # 💻 Web Frontend
   web:
@@ -44,16 +44,18 @@ services:
     depends_on:
       - api
 
-  # 🗺️ TileServer GL
+  # 🗺️ TileServer GL (Servicio Desacoplado)
   tileserver:
-    image: maptiler/tileserver-gl:latest
+    build:
+      context: ./maps
+      dockerfile: Dockerfile
     container_name: monitoreo_tileserver_local
     restart: unless-stopped
     volumes:
-      - ./backend/maps:/data
+      - ./maps:/data
     ports:
       - "8080:8080"
-    command: [ "-p", "8080", "-c", "tileserver-config.json" ]
+    command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]
 
 volumes:
   postgres_data_local:
