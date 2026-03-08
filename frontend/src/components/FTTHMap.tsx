@@ -100,13 +100,21 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             zoom: zoom,
             maxZoom: 22,
             transformRequest: (url, resourceType) => {
-                if (resourceType === 'Glyphs' && url.includes('/fonts/')) {
-                    // Bypass tileserver-gl overriding the fonts and serve from MapLibre demo CDN
+                let transformedUrl = url;
+
+                // Force HTTPS for all map resources in production (except localhost)
+                if (!transformedUrl.startsWith('http://localhost') &&
+                    !transformedUrl.startsWith('http://127.0.0.1') &&
+                    !transformedUrl.startsWith('http://192.168.')) {
+                    transformedUrl = transformedUrl.replace('http://', 'https://');
+                }
+
+                if (resourceType === 'Glyphs' && transformedUrl.includes('/fonts/')) {
                     return {
-                        url: url.replace(/^.*?\/fonts\//, 'https://demotiles.maplibre.org/font/')
+                        url: transformedUrl.replace(/^.*?\/fonts\//, 'https://demotiles.maplibre.org/font/')
                     };
                 }
-                return { url };
+                return { url: transformedUrl };
             }
         });
 
