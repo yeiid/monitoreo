@@ -29,6 +29,9 @@ services:
       - db
     volumes:
       - /var/lib/monitoreo/maps:/app/maps
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service.port=8000"
 
   # 💻 Web Frontend
   web:
@@ -42,6 +45,9 @@ services:
     restart: unless-stopped
     expose:
       - "80"
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service.port=80"
 
   # 🗺️ TileServer GL
   tileserver:
@@ -53,3 +59,6 @@ services:
     expose:
       - "8080"
     command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service.port=8080"
