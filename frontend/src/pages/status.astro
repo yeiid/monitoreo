@@ -1,0 +1,174 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Estado del Sistema - FTTH Mapper">
+    <div class="data-table-container animate-in">
+        <div style="margin-bottom: 32px;">
+            <h1
+                style="font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;"
+            >
+                Estado del Sistema
+            </h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                Monitorización en tiempo real de servicios, base de datos y
+                rendimiento de la red.
+            </p>
+        </div>
+
+        <div
+            class="stats-grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));"
+        >
+            <!-- API Status -->
+            <div class="glass-panel" style="padding: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"
+                >
+                    <div>
+                        <h3 style="font-size: 1rem; margin-bottom: 4px;">
+                            Backend API
+                        </h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            FastAPI Service
+                        </p>
+                    </div>
+                    <span
+                        class="badge"
+                        style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
+                        >Operacional</span
+                    >
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div
+                        style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"
+                    >
+                        <div
+                            style="width: 100%; height: 100%; background: var(--success);"
+                        >
+                        </div>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);"
+                    >
+                        <span>Uptime: 99.9%</span>
+                        <span>Latencia: 14ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Status -->
+            <div class="glass-panel" style="padding: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"
+                >
+                    <div>
+                        <h3 style="font-size: 1rem; margin-bottom: 4px;">
+                            PostgreSQL + PostGIS
+                        </h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            Base de Datos Espacial
+                        </p>
+                    </div>
+                    <span
+                        class="badge"
+                        style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
+                        >Conectado</span
+                    >
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div
+                        style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"
+                    >
+                        <div
+                            style="width: 85%; height: 100%; background: var(--primary);"
+                        >
+                        </div>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);"
+                    >
+                        <span>Sesiones: 12 activas</span>
+                        <span>Uso Disco: 1.2 GB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tileserver Status -->
+            <div class="glass-panel" style="padding: 24px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"
+                >
+                    <div>
+                        <h3 style="font-size: 1rem; margin-bottom: 4px;">
+                            TileServer GL
+                        </h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            Servidor de Mapas
+                        </p>
+                    </div>
+                    <span
+                        class="badge"
+                        style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
+                        >Activo</span
+                    >
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div
+                        style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"
+                    >
+                        <div
+                            style="width: 40%; height: 100%; background: var(--olt-color);"
+                        >
+                        </div>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);"
+                    >
+                        <span>Caché: 450 MB</span>
+                        <span>Peticiones: 1.2k/hr</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Logs Preview -->
+        <div class="glass-panel" style="margin-top: 24px; padding: 24px;">
+            <h3 style="font-size: 1rem; margin-bottom: 16px;">
+                Registros Recientes
+            </h3>
+            <div
+                style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a5b4fc; border: 1px solid rgba(255,255,255,0.05);"
+            >
+                <div style="margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);"
+                        >[2024-03-09 10:24:12]</span
+                    >
+                    <span style="color: var(--success);">INFO:</span> Usuario 'admin'
+                    inició sesión desde 192.168.1.45
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);"
+                        >[2024-03-09 10:22:05]</span
+                    >
+                    <span style="color: var(--success);">INFO:</span> Backup automático
+                    completado exitosamente
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <span style="color: var(--text-muted);"
+                        >[2024-03-09 10:15:30]</span
+                    >
+                    <span style="color: var(--olt-color);">WARN:</span> Latencia
+                    elevada en peticiones de Tiles (maptiler.pbf)
+                </div>
+                <div style="margin-bottom: 0;">
+                    <span style="color: var(--text-muted);"
+                        >[2024-03-09 10:01:12]</span
+                    >
+                    <span style="color: var(--success);">INFO:</span> Sincronización
+                    de hilos completada para cable 'Troncal Principal Norte'
+                </div>
+            </div>
+        </div>
+    </div>
+</DashboardLayout>

@@ -1,0 +1,135 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Splitters - FTTH Mapper">
+    <div class="data-table-container animate-in">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;"
+        >
+            <div>
+                <h1
+                    style="font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;"
+                >
+                    Gestión de Splitters
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Administra la división de potencia óptica en tu red.
+                </p>
+            </div>
+            <button class="btn btn-primary">
+                <span>+ Nuevo Splitter</span>
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card glass-panel">
+                <div
+                    class="stat-icon"
+                    style="background: rgba(139, 92, 246, 0.1); color: var(--primary);"
+                >
+                    󰏗
+                </div>
+                <div class="stat-info">
+                    <span class="label">Total Splitters</span>
+                    <span class="value" id="total-splitters">0</span>
+                </div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div
+                    class="stat-icon"
+                    style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
+                >
+                    󰋗
+                </div>
+                <div class="stat-info">
+                    <span class="label">Balanceados</span>
+                    <span class="value" id="balanced-splitters">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="padding: 4px;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Relación (Ratio)</th>
+                        <th>Nodo Padre</th>
+                        <th>Pérdida (dB)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="splitters-tbody">
+                    <tr>
+                        <td
+                            colspan="5"
+                            style="text-align:center; padding: 60px; color: var(--text-muted);"
+                        >
+                            <div class="animate-pulse">
+                                Cargando datos de splitters...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</DashboardLayout>
+
+<script>
+    import { API_BASE } from "../components/map/types";
+
+    async function loadSplitters() {
+        try {
+            const res = await fetch(`${API_BASE}/splitters`);
+            if (!res.ok) throw new Error("API Error");
+            const splitters = await res.json();
+            renderSplitters(splitters);
+        } catch (e) {
+            console.error(e);
+            const tbody = document.getElementById("splitters-tbody");
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--error);">No se pudo conectar con el servidor.</td></tr>`;
+            }
+        }
+    }
+
+    function renderSplitters(splitters: any[]) {
+        const tbody = document.getElementById("splitters-tbody");
+        const totalEl = document.getElementById("total-splitters");
+        if (totalEl) totalEl.textContent = String(splitters.length);
+
+        if (!tbody) return;
+
+        if (splitters.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">No hay splitters configurados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = splitters
+            .map(
+                (s) => `
+            <tr class="animate-in">
+                <td><span style="font-weight: 600;">${s.name}</span></td>
+                <td><span class="badge badge-nap">1:${
+                    s.ratio || "N/A"
+                }</span></td>
+                <td>${s.parent_node_name || "—"}</td>
+                <td><span style="color: var(--error); font-weight: 600;">-${
+                    s.loss_db || "3.5"
+                } dB</span></td>
+                <td>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-glass" style="padding: 6px 12px; font-size: 0.8rem;">Editar</button>
+                        <button class="btn btn-glass" style="padding: 6px 12px; font-size: 0.8rem; color: var(--error);">Eliminar</button>
+                    </div>
+                </td>
+            </tr>
+        `
+            )
+            .join("");
+    }
+
+    loadSplitters();
+</script>

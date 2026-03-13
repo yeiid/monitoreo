@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, User, Wifi, Menu, LogOut } from 'lucide-react';
+import { Search, Bell, Wifi, Menu, LogOut, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from './auth/AuthProvider';
 
 const Header = () => {
@@ -9,39 +9,27 @@ const Header = () => {
     window.dispatchEvent(new CustomEvent('toggle-sidebar'));
   };
 
-  // Determinar el badge del rol
-  const getRoleBadge = () => {
-    if (!user) return null;
-    const roleLabels: Record<string, { label: string; color: string }> = {
-      super_admin: { label: 'Super Admin', color: '#ef4444' },
-      org_admin: { label: 'Administrador', color: '#6366f1' },
-      technician: { label: 'Técnico', color: '#10b981' },
+  const getRoleInfo = () => {
+    if (!user) return { label: 'Invitado', color: 'var(--text-muted)' };
+    const roles: Record<string, { label: string; color: string }> = {
+      super_admin: { label: 'Super Admin', color: 'var(--olt-color)' },
+      org_admin: { label: 'Administrador', color: 'var(--primary)' },
+      technician: { label: 'Técnico', color: 'var(--success)' },
     };
-    const role = roleLabels[user.role] || { label: user.role, color: '#64748b' };
-    return (
-      <span style={{
-        fontSize: '0.68rem',
-        padding: '2px 8px',
-        borderRadius: '6px',
-        background: `${role.color}20`,
-        color: role.color,
-        fontWeight: 600,
-        border: `1px solid ${role.color}30`,
-      }}>
-        {role.label}
-      </span>
-    );
+    return roles[user.role] || { label: user.role, color: 'var(--text-muted)' };
   };
 
+  const roleInfo = getRoleInfo();
+
   return (
-    <header className="header glass-morphism">
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <button className="mobile-menu-toggle" onClick={toggleSidebar}>
+    <header className="header animate-in">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <button className="mobile-only btn btn-glass" style={{ padding: '8px' }} onClick={toggleSidebar}>
           <Menu size={20} />
         </button>
-        <div className="search-bar desktop-only">
-          <Search size={16} className="search-icon" />
-          <input type="text" placeholder="Buscar nodos..." />
+        <div className="search-wrapper desktop-only">
+          <Search size={16} className="search-icon" style={{ color: 'var(--text-muted)' }} />
+          <input type="text" placeholder="Buscar nodos, cables o clientes..." />
         </div>
       </div>
 
@@ -49,46 +37,71 @@ const Header = () => {
         <div className="desktop-only" style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
-          padding: '6px 14px',
-          background: 'rgba(16, 185, 129, 0.1)',
-          borderRadius: '10px',
+          gap: '8px',
+          padding: '8px 14px',
+          background: 'rgba(16, 185, 129, 0.08)',
+          borderRadius: '12px',
           border: '1px solid rgba(16, 185, 129, 0.15)',
-          fontSize: '0.78rem',
+          fontSize: '0.8rem',
           color: 'var(--success)',
           fontWeight: '600',
         }}>
           <Wifi size={14} />
-          <span>API Conectada</span>
+          <span>Sincronizado</span>
         </div>
-        <div className="divider"></div>
-        <button className="icon-btn">
+
+        <button className="btn btn-glass" style={{ padding: '10px', position: 'relative' }}>
           <Bell size={18} />
-          <span className="notification-dot"></span>
+          <span style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            width: '8px',
+            height: '8px',
+            background: 'var(--primary)',
+            borderRadius: '50%',
+            border: '2px solid var(--bg-header)'
+          }}></span>
         </button>
 
-        {/* User info */}
+        <div className="divider"></div>
+
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          padding: '4px 8px 4px 12px',
-          borderRadius: '10px',
-          background: 'rgba(255,255,255,0.04)',
+          gap: '12px',
+          padding: '4px 4px 4px 16px',
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '14px',
+          border: '1px solid var(--border)'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e2e8f0' }}>
-              {user?.full_name || 'Usuario'}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white' }}>
+              {user?.full_name || 'Operador'}
             </span>
-            {getRoleBadge()}
+            <span style={{ fontSize: '0.7rem', color: roleInfo.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {roleInfo.label}
+            </span>
+          </div>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            background: `linear-gradient(135deg, ${roleInfo.color}, transparent)`,
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            {user?.role === 'super_admin' ? <ShieldCheck size={20} color="white" /> : <User size={20} color="white" />}
           </div>
           <button
-            className="user-btn"
+            className="btn btn-glass"
+            style={{ padding: '8px', color: 'var(--error)' }}
             onClick={logout}
             title="Cerrar sesión"
-            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
           >
-            <LogOut size={16} />
+            <LogOut size={18} />
           </button>
         </div>
       </div>

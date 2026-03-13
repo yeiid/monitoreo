@@ -1,0 +1,38 @@
+---
+import Layout from "./Layout.astro";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<Layout title={title}>
+    <main class="dashboard-container">
+        <Sidebar client:load />
+
+        <div class="main-content">
+            <Header client:load />
+            <slot />
+        </div>
+    </main>
+</Layout>
+
+<style is:global>
+    .dashboard-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 24px 16px 0;
+        overflow: hidden;
+    }
+</style>

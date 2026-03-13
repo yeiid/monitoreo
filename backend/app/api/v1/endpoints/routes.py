@@ -12,6 +12,8 @@ from ....models.auth import User
 from ....schemas.network import RouteCreate, RouteRead, RouteUpdate
 from ..deps import get_current_user, get_org_filter
 
+from ....utils.network import generate_fiber_strands
+
 router = APIRouter()
 
 @router.post("", response_model=RouteRead, status_code=status.HTTP_201_CREATED)
@@ -29,17 +31,8 @@ async def create_route(
     session.add(db_route)
     await session.flush() # Get ID
 
-    # Auto-generate strands
-    TIA_598_COLORS = ["azul", "naranja", "verde", "marron", "gris", "blanco", "rojo", "negro", "amarillo", "violeta", "rosa", "aqua"]
-    for i in range(db_route.capacity):
-        color = TIA_598_COLORS[i % len(TIA_598_COLORS)]
-        strand = FiberStrand(
-            route_id=db_route.id,
-            color=color,
-            strand_number=i + 1,
-            buffer_number=(i // 6) + 1
-        )
-        session.add(strand)
+    # Auto-generate strands using centralized utility
+    await generate_fiber_strands(session, db_route.id, db_route.capacity)
 
     await session.commit()
     await session.refresh(db_route)
