@@ -99,16 +99,14 @@ const getRawApi = () => {
     if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
         return import.meta.env.PUBLIC_API_URL;
     }
-    // Fallback for production domains
+    // In production, use relative path to leverage Nginx proxy on the same domain
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        if (hostname.includes('api2.neuraljira.tech') || hostname.includes('ftthmapper.neuraljira.tech')) {
-            return `https://api2.neuraljira.tech/api/v1`;
-        }
         if (hostname.includes('neuraljira.tech')) {
-            return `https://${hostname.replace('ftthmapper', 'api2')}/api/v1`;
+            return '/api/v1';
         }
     }
+    // Fallback for local development
     return 'http://localhost:8000/api/v1';
 };
 
@@ -117,13 +115,13 @@ let RawAPI = getRawApi();
 // Remove trailing slash to avoid double slashes or 307 redirects
 RawAPI = RawAPI.replace(/\/$/, '');
 
-// Ensure /api/v1 prefix is present if it's a domain call
-if (!RawAPI.endsWith('/api/v1') && RawAPI.includes('neuraljira.tech')) {
+// Ensure /api/v1 prefix is present if it's NOT a relative path starting with /
+if (!RawAPI.endsWith('/api/v1') && !RawAPI.startsWith('/')) {
     RawAPI = `${RawAPI}/api/v1`;
 }
 
-// Aggressive fix: If we're not on localhost/127.0.0.1, force https
-if (typeof window !== 'undefined') {
+// Aggressive fix: If we're not on localhost/127.0.0.1 and NOT a relative path, force https
+if (typeof window !== 'undefined' && !RawAPI.startsWith('/')) {
     const isLocal = window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1' ||
         window.location.hostname.startsWith('192.168.');
