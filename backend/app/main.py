@@ -12,8 +12,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Trust proxy headers (Coolify/Traefik)
-from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+# Trust proxy headers (Dokploy/Traefik)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 from fastapi import Request
@@ -34,17 +33,25 @@ async def on_startup():
 app.include_router(network_router, prefix="/api/v1", tags=["FTTH Network"])
 
 # CORS configuration
-origins = os.getenv("CORS_ORIGINS", "*").split(",")
-if "*" not in origins:
-    # Always include the production and common development origins
-    additional = [
-        "https://fttpmapper.neuraljira.tech",
-        "https://api2.neuraljira.tech",
-        "https://tiles.neuraljira.tech",
-        "http://localhost:3000",
-        "http://localhost:4321",
-        "http://localhost:5173", # Vite default
-    ]
+raw_origins = os.getenv("CORS_ORIGINS", "").split(",")
+origins = [o.strip() for o in raw_origins if o.strip()]
+
+# Common production and development origins
+additional = [
+    "https://ftthmapper.neuraljira.tech",
+    "https://api2.neuraljira.tech",
+    "https://tiles.neuraljira.tech",
+    "http://localhost:3000",
+    "http://localhost:4321",
+    "http://localhost:5173",
+    "http://localhost:8080",
+]
+
+if not origins or "*" in origins:
+    # If using *, we MUST specify origins if allow_credentials=True, 
+    # or FastAPI will have issues echoing the origin.
+    origins = additional
+else:
     for origin in additional:
         if origin not in origins:
             origins.append(origin)

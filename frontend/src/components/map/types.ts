@@ -102,11 +102,11 @@ const getRawApi = () => {
     // Fallback for production domains
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        if (hostname.includes('api2.neuraljira.tech') || hostname.includes('fttpmapper.neuraljira.tech')) {
+        if (hostname.includes('api2.neuraljira.tech') || hostname.includes('ftthmapper.neuraljira.tech')) {
             return `https://api2.neuraljira.tech/api/v1`;
         }
         if (hostname.includes('neuraljira.tech')) {
-            return `https://${hostname.replace('fttpmapper', 'api2')}/api/v1`;
+            return `https://${hostname.replace('ftthmapper', 'api2')}/api/v1`;
         }
     }
     return 'http://localhost:8000/api/v1';
