@@ -8,6 +8,7 @@ WORKDIR /data
 # We copy them so the container can run standalone if needed
 COPY tileserver-config.json .
 COPY styles ./styles
+# Ensure fonts directory is copied (it now has a .gitkeep)
 COPY fonts ./fonts
 
 # Note: .mbtiles files should still be mounted as volumes for size/persistence
