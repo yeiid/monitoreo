@@ -39,7 +39,8 @@ if "*" not in origins:
     # Always include the production and common development origins
     additional = [
         "https://fttpmapper.neuraljira.tech",
-        "https://api.neuraljira.tech",
+        "https://api2.neuraljira.tech",
+        "https://tiles.neuraljira.tech",
         "http://localhost:3000",
         "http://localhost:4321",
         "http://localhost:5173", # Vite default

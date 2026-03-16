@@ -10,8 +10,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-monitoreodb}
     volumes:
       - /var/lib/monitoreo/db:/var/lib/postgresql/data
-    expose:
-      - "5432"
+    networks:
+      - monitoreo_net
 
   # 🌐 API Backend
   api:
@@ -20,15 +20,15 @@ services:
       dockerfile: ./backend/Dockerfile
     container_name: monitoreo_api
     restart: unless-stopped
-    expose:
-      - "8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-monitoreo}:${POSTGRES_PASSWORD:-monitoreo123}@db:5432/${POSTGRES_DB:-monitoreodb}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
     depends_on:
       - db
     volumes:
-      - /var/www/maps:/app/maps
+      - /var/lib/monitoreo/maps:/app/maps
+    networks:
+      - monitoreo_net
 
   # 💻 Web Frontend
   web:
@@ -36,19 +36,28 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile
       args:
-        - PUBLIC_API_URL=${PUBLIC_API_URL}
+        - PUBLIC_API_URL=${PUBLIC_API_URL:-https://api2.neuraljira.tech}
+        - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL:-/tiles/}
     container_name: monitoreo_web
     restart: unless-stopped
-    expose:
-      - "80"
+    depends_on:
+      - api
+    networks:
+      - monitoreo_net
 
-  # 🗺️ TileServer GL
-  tileserver:
-    image: maptiler/tileserver-gl:latest
-    container_name: monitoreo_tileserver
+  # 🗺️ Map Server (TileServer GL)
+  mapserver:
+    build:
+      context: ./maps
+      dockerfile: Dockerfile
+    container_name: monitoreo_mapserver
     restart: unless-stopped
     volumes:
-      - /var/www/maps:/data
-    expose:
-      - "8080"
-    command: [ "-p", "8080", "-c", "tileserver-config.json" ]
+      - /var/lib/monitoreo/maps:/data
+    command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]
+    networks:
+      - monitoreo_net
+
+networks:
+  monitoreo_net:
+    driver: bridge

@@ -10,8 +10,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-monitoreodb}
     volumes:
       - /var/lib/monitoreo/db:/var/lib/postgresql/data
-    expose:
-      - "5432"
+    networks:
+      - monitoreo_net
 
   # 🌐 API Backend
   api:
@@ -20,8 +20,6 @@ services:
       dockerfile: ./backend/Dockerfile
     container_name: monitoreo_api
     restart: unless-stopped
-    expose:
-      - "8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-monitoreo}:${POSTGRES_PASSWORD:-monitoreo123}@db:5432/${POSTGRES_DB:-monitoreodb}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
@@ -29,9 +27,8 @@ services:
       - db
     volumes:
       - /var/lib/monitoreo/maps:/app/maps
-    labels:
-      - "coolify.managed=true"
-      - "coolify.service.port=8000"
+    networks:
+      - monitoreo_net
 
   # 💻 Web Frontend
   web:
@@ -39,15 +36,14 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile
       args:
-        - PUBLIC_API_URL=${PUBLIC_API_URL}
-        - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL}
+        - PUBLIC_API_URL=${PUBLIC_API_URL:-https://api2.neuraljira.tech}
+        - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL:-/tiles/}
     container_name: monitoreo_web
     restart: unless-stopped
-    expose:
-      - "80"
-    labels:
-      - "coolify.managed=true"
-      - "coolify.service.port=80"
+    depends_on:
+      - api
+    networks:
+      - monitoreo_net
 
   # 🗺️ Map Server (TileServer GL)
   mapserver:
@@ -58,9 +54,10 @@ services:
     restart: unless-stopped
     volumes:
       - /var/lib/monitoreo/maps:/data
-    expose:
-      - "8080"
     command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]
-    labels:
-      - "coolify.managed=true"
-      - "coolify.service.port=8080"
+    networks:
+      - monitoreo_net
+
+networks:
+  monitoreo_net:
+    driver: bridge
