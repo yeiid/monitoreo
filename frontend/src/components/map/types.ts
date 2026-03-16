@@ -99,7 +99,8 @@ const getRawApi = () => {
     // This is the most robust way to avoid SSL/CORS issues with subdomains.
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        if (hostname.includes('neuraljira.tech')) {
+        // Also use relative paths for localhost to test the Nginx proxy unifed setup locally
+        if (hostname.includes('neuraljira.tech') || hostname === 'localhost' || hostname === '127.0.0.1') {
             return '/api/v1';
         }
     }
