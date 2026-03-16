@@ -95,13 +95,8 @@ export const ROUTE_CONFIG: Record<string, RouteConfigItem> = {
 
 // 1. API_BASE with robust sanitization for Astro
 const getRawApi = () => {
-    // 1. Priority: Provided build-time/environment variable
-    if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
-        let envApi = import.meta.env.PUBLIC_API_URL;
-        if (envApi.startsWith('http') || envApi.startsWith('/')) return envApi;
-    }
-
-    // 2. Production detection: Use relative path for Nginx proxy proxying
+    // 1. Production detection: ALWAYS use relative path if on the production domain
+    // This is the most robust way to avoid SSL/CORS issues with subdomains.
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
         if (hostname.includes('neuraljira.tech')) {
@@ -109,7 +104,13 @@ const getRawApi = () => {
         }
     }
 
-    // 3. Development fallback
+    // 2. Build-time environment variable (highest priority for non-standard or local setups)
+    if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
+        let envApi = import.meta.env.PUBLIC_API_URL;
+        if (envApi.startsWith('http') || envApi.startsWith('/')) return envApi;
+    }
+
+    // 3. Last fallback (development)
     return 'http://localhost:8000/api/v1';
 };
 
