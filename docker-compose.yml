@@ -46,7 +46,7 @@ services:
       - monitoreo_net
 
   # 🗺️ Map Server (TileServer GL)
-  mapserver:
+  tileserver:
     build:
       context: ./maps
       dockerfile: Dockerfile
