@@ -99,9 +99,15 @@ const getRawApi = () => {
     if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
         return import.meta.env.PUBLIC_API_URL;
     }
-    // Fallback for local development or other environments
-    if (typeof window !== 'undefined' && window.location.hostname.includes('neuraljira.tech')) {
-        return 'https://api.neuraljira.tech/api/v1';
+    // Fallback for production domains
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname.includes('api2.neuraljira.tech') || hostname.includes('fttpmapper.neuraljira.tech')) {
+            return `https://api2.neuraljira.tech/api/v1`;
+        }
+        if (hostname.includes('neuraljira.tech')) {
+            return `https://${hostname.replace('fttpmapper', 'api2')}/api/v1`;
+        }
     }
     return 'http://localhost:8000/api/v1';
 };
@@ -111,8 +117,8 @@ let RawAPI = getRawApi();
 // Remove trailing slash to avoid double slashes or 307 redirects
 RawAPI = RawAPI.replace(/\/$/, '');
 
-// Ensure /api/v1 prefix is present
-if (!RawAPI.endsWith('/api/v1')) {
+// Ensure /api/v1 prefix is present if it's a domain call
+if (!RawAPI.endsWith('/api/v1') && RawAPI.includes('neuraljira.tech')) {
     RawAPI = `${RawAPI}/api/v1`;
 }
 
@@ -130,7 +136,7 @@ export const API_BASE = RawAPI;
 
 // 2. TileServer configuration
 export const MAP_TILE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_TILE_URL)
-    || 'http://localhost:8080/styles/basic/style.json';
+    || (typeof window !== 'undefined' && window.location.hostname.includes('neuraljira.tech') ? '/tiles/' : 'http://localhost:8080/styles/basic/style.json');
 
 export const TILES_ATTRIBUTION = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_ATTRIBUTION)
     || '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';

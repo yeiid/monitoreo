@@ -20,6 +20,8 @@ services:
       dockerfile: ./backend/Dockerfile
     container_name: monitoreo_api
     restart: unless-stopped
+    expose:
+      - "8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-monitoreo}:${POSTGRES_PASSWORD:-monitoreo123}@db:5432/${POSTGRES_DB:-monitoreodb}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
@@ -40,6 +42,8 @@ services:
         - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL:-/tiles/}
     container_name: monitoreo_web
     restart: unless-stopped
+    expose:
+      - "80"
     depends_on:
       - api
     networks:
@@ -52,6 +56,8 @@ services:
       dockerfile: Dockerfile
     container_name: monitoreo_mapserver
     restart: unless-stopped
+    expose:
+      - "8080"
     volumes:
       - /var/lib/monitoreo/maps:/data
     command: [ "-p", "8080", "-c", "/data/tileserver-config.json" ]
