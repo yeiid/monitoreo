@@ -4,7 +4,7 @@ services:
       context: ..
       dockerfile: ./frontend/Dockerfile
       args:
-        - PUBLIC_API_URL=${PUBLIC_API_URL:-https://api2.neuraljira.tech}
+        - PUBLIC_API_URL=${PUBLIC_API_URL:-/api/v1}
         - PUBLIC_MAP_TILE_URL=${PUBLIC_MAP_TILE_URL:-/tiles/}
     container_name: monitoreo_web_standalone
     restart: unless-stopped
