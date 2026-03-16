@@ -19,8 +19,8 @@ EXPOSE 8080
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Healthcheck for the map server
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=40s --timeout=15s --retries=3 \
+    CMD curl -f http://localhost:8080/ || exit 1
 
 # Start command
 ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
