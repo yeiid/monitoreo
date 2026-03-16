@@ -22,44 +22,45 @@ from .db.session import engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
+async def seed_data(session: AsyncSession):
+    """Lógica para crear el Super Admin inicial si no existe."""
+    # Verificar si ya existe un super admin
+    result = await session.execute(
+        select(User).where(User.role == UserRole.SUPER_ADMIN)
+    )
+    existing = result.scalar_one_or_none()
+    
+    if existing:
+        print(f"⚠️ Ya existe un Super Admin: {existing.email}")
+        return
+    
+    # Crear Super Admin
+    email = os.getenv("SUPER_ADMIN_EMAIL", "admin@ftth-mapper.com")
+    password = os.getenv("SUPER_ADMIN_PASSWORD", "admin123")
+    name = os.getenv("SUPER_ADMIN_NAME", "Super Administrador")
+    
+    admin = User(
+        email=email,
+        full_name=name,
+        hashed_password=get_password_hash(password),
+        role=UserRole.SUPER_ADMIN,
+        organization_id=None,
+        is_active=True
+    )
+    session.add(admin)
+    await session.commit()
+    
+    print(f"✅ Super Admin creado exitosamente:")
+    print(f"   Email: {email}")
+    print(f"   Password: {password}")
+
+
 async def seed():
-    # Primero inicializar las tablas
+    # Para ejecución manual desde CLI
     await init_db()
-    
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
     async with async_session() as session:
-        # Verificar si ya existe un super admin
-        result = await session.execute(
-            select(User).where(User.role == UserRole.SUPER_ADMIN)
-        )
-        existing = result.scalar_one_or_none()
-        
-        if existing:
-            print(f"⚠️ Ya existe un Super Admin: {existing.email}")
-            print("No se creará otro. Si quieres reiniciar, elimina la tabla 'users'.")
-            return
-        
-        # Crear Super Admin
-        email = os.getenv("SUPER_ADMIN_EMAIL", "admin@ftth-mapper.com")
-        password = os.getenv("SUPER_ADMIN_PASSWORD", "admin123")
-        name = os.getenv("SUPER_ADMIN_NAME", "Super Administrador")
-        
-        admin = User(
-            email=email,
-            full_name=name,
-            hashed_password=get_password_hash(password),
-            role=UserRole.SUPER_ADMIN,
-            organization_id=None,  # Super admin no pertenece a ninguna org
-            is_active=True
-        )
-        session.add(admin)
-        await session.commit()
-        
-        print(f"✅ Super Admin creado exitosamente:")
-        print(f"   Email: {email}")
-        print(f"   Password: {password}")
-        print(f"   ⚠️ ¡CAMBIA LA CONTRASEÑA EN PRODUCCIÓN!")
+        await seed_data(session)
 
 
 if __name__ == "__main__":

@@ -1,113 +1,110 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
+import DashboardLayout from "../layouts/DashboardLayout.astro";
 ---
 
-<Layout title="Nodos - FTTH Mapper">
-    <main class="dashboard-container">
-        <Sidebar client:load />
+<DashboardLayout title="Nodos de Red - FTTH Mapper">
+    <div class="data-table-container animate-in">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;"
+        >
+            <div>
+                <h1
+                    style="font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;"
+                >
+                    Gestión de Nodos
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Visualiza y administra todos los puntos físicos de tu
+                    infraestructura.
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <a href="/" class="btn btn-glass" style="text-decoration: none;"
+                    >← Volver al Mapa</a
+                >
+                <button class="btn btn-primary">+ Nuevo Nodo</button>
+            </div>
+        </div>
 
-        <div class="main-content">
-            <Header client:load />
-
-            <div class="content-scroll">
-                <div class="content-header">
-                    <h1>Gestión de Nodos de Red</h1>
-                    <a
-                        href="/"
-                        class="primary-btn"
-                        style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
-                    >
-                        ← Volver al Mapa
-                    </a>
+        <div class="stats-grid">
+            <div class="stat-card glass-panel">
+                <div
+                    class="stat-icon"
+                    style="background: rgba(244, 63, 94, 0.1); color: var(--olt-color);"
+                >
+                    📡
                 </div>
-
-                <div class="stats-row">
-                    <div class="mini-stat glass-morphism">
-                        <div
-                            class="mini-stat-icon"
-                            style="background: rgba(239, 68, 68, 0.12); color: var(--olt-color);"
-                        >
-                            📡
-                        </div>
-                        <div>
-                            <span class="mini-stat-label">OLTs</span>
-                            <span class="mini-stat-value" id="count-olt">-</span
-                            >
-                        </div>
-                    </div>
-                    <div class="mini-stat glass-morphism">
-                        <div
-                            class="mini-stat-icon"
-                            style="background: rgba(245, 158, 11, 0.12); color: var(--mufla-color);"
-                        >
-                            🔶
-                        </div>
-                        <div>
-                            <span class="mini-stat-label">Muflas</span>
-                            <span class="mini-stat-value" id="count-mufla"
-                                >-</span
-                            >
-                        </div>
-                    </div>
-                    <div class="mini-stat glass-morphism">
-                        <div
-                            class="mini-stat-icon"
-                            style="background: rgba(6, 182, 212, 0.12); color: var(--nap-color);"
-                        >
-                            📦
-                        </div>
-                        <div>
-                            <span class="mini-stat-label">NAPs</span>
-                            <span class="mini-stat-value" id="count-nap">-</span
-                            >
-                        </div>
-                    </div>
-                    <div class="mini-stat glass-morphism">
-                        <div
-                            class="mini-stat-icon"
-                            style="background: rgba(16, 185, 129, 0.12); color: var(--client-color);"
-                        >
-                            🏠
-                        </div>
-                        <div>
-                            <span class="mini-stat-label">Clientes ONU</span>
-                            <span class="mini-stat-value" id="count-client"
-                                >-</span
-                            >
-                        </div>
-                    </div>
+                <div class="stat-info">
+                    <span class="label">Total OLTs</span>
+                    <span class="value" id="count-olt">-</span>
                 </div>
-
-                <div class="table-container glass-morphism">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Tipo</th>
-                                <th>Ubicación</th>
-                                <th>Potencia (dBm)</th>
-                                <th>Descripción</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="nodes-tbody">
-                            <tr>
-                                <td
-                                    colspan="5"
-                                    style="text-align:center; padding: 40px; color: var(--text-muted);"
-                                >
-                                    Cargando nodos...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            </div>
+            <div class="stat-card glass-panel">
+                <div
+                    class="stat-icon"
+                    style="background: rgba(251, 191, 36, 0.1); color: var(--mufla-color);"
+                >
+                    🔶
+                </div>
+                <div class="stat-info">
+                    <span class="label">Muflas</span>
+                    <span class="value" id="count-mufla">-</span>
+                </div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div
+                    class="stat-icon"
+                    style="background: rgba(34, 211, 238, 0.1); color: var(--nap-color);"
+                >
+                    📦
+                </div>
+                <div class="stat-info">
+                    <span class="label">Cajas NAP</span>
+                    <span class="value" id="count-nap">-</span>
+                </div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div
+                    class="stat-icon"
+                    style="background: rgba(52, 211, 153, 0.1); color: var(--client-color);"
+                >
+                    🏠
+                </div>
+                <div class="stat-info">
+                    <span class="label">Clientes ONU</span>
+                    <span class="value" id="count-client">-</span>
                 </div>
             </div>
         </div>
-    </main>
-</Layout>
+
+        <div class="glass-panel" style="padding: 4px;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Ubicación</th>
+                        <th>Potencia (dBm)</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="nodes-tbody">
+                    <tr>
+                        <td
+                            colspan="6"
+                            style="text-align:center; padding: 60px; color: var(--text-muted);"
+                        >
+                            <div class="animate-pulse">
+                                Cargando nodos de red...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</DashboardLayout>
 
 <script>
     import { API_BASE } from "../components/map/types";
@@ -163,38 +160,46 @@ import Header from "../components/Header";
         });
         document.getElementById("count-olt")!.textContent = String(counts.OLT);
         document.getElementById("count-mufla")!.textContent = String(
-            counts.MUFLA,
+            counts.MUFLA
         );
         document.getElementById("count-nap")!.textContent = String(
-            counts.CAJA_NAP,
+            counts.CAJA_NAP
         );
         document.getElementById("count-client")!.textContent = String(
-            counts.CLIENTE_ONU,
+            counts.CLIENTE_ONU
         );
 
         const tbody = document.getElementById("nodes-tbody")!;
         if (nodes.length === 0) {
             tbody.innerHTML =
-                '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">No hay nodos registrados.</td></tr>';
+                '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No hay nodos registrados.</td></tr>';
             return;
         }
+
+        const BADGE_MAP: Record<string, string> = {
+            OLT: "badge-olt",
+            MUFLA: "badge-mufla",
+            CAJA_NAP: "badge-nap",
+            CLIENTE_ONU: "badge-client",
+        };
 
         tbody.innerHTML = nodes
             .map(
                 (n: any) => `
-            <tr>
+            <tr class="animate-in">
                 <td><strong style="color:white;">${n.name}</strong></td>
-                <td><span class="stat-badge ${NODE_BADGES[n.node_type] || ""}">${NODE_LABELS[n.node_type] || n.node_type}</span></td>
-                <td style="font-size:0.82rem;">${n.location ? `${n.location.lat.toFixed(5)}, ${n.location.lng.toFixed(5)}` : "—"}</td>
-                <td style="font-weight:bold; color: ${n.optical_power_dbm !== null ? (n.optical_power_dbm < -25 ? "var(--error)" : "var(--success)") : "var(--text-muted)"};">
-                    ${n.optical_power_dbm !== null ? `${n.optical_power_dbm} dBm` : "—"}
+                    }
                 </td>
-                <td style="font-size:0.85rem;color:var(--text-muted);">${n.description || "—"}</td>
+                <td style="font-size:0.85rem;color:var(--text-muted);">${
+                    n.description || "—"
+                }</td>
                 <td>
-                    <button class="secondary-btn" style="font-size:0.78rem;padding:5px 12px;" onclick="deleteNode('${n.id}')">Eliminar</button>
+                    <button class="secondary-btn" style="font-size:0.78rem;padding:5px 12px;" onclick="deleteNode('${
+                        n.id
+                    }')">Eliminar</button>
                 </td>
             </tr>
-        `,
+        `
             )
             .join("");
     }

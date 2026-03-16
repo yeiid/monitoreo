@@ -1,0 +1,140 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+---
+
+<DashboardLayout title="Configuración - FTTH Mapper">
+    <div
+        class="data-table-container animate-in"
+        style="max-width: 1000px; margin: 0 auto; width: 100%;"
+    >
+        <div style="margin-bottom: 32px;">
+            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 8px;">
+                Panel de Configuración
+            </h1>
+            <p style="color: var(--text-muted);">
+                Administra los parámetros globales del sistema y usuarios.
+            </p>
+        </div>
+
+        <div
+            class="stats-grid"
+            style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));"
+        >
+            <div class="glass-panel" style="padding: 24px;">
+                <h3
+                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: white;"
+                >
+                    󰒓 Configuración General
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;"
+                            >NOMBRE DE LA ORGANIZACIÓN</label
+                        >
+                        <input
+                            type="text"
+                            class="btn btn-glass"
+                            style="width: 100%; text-align: left;"
+                            value="Operador Global FTTH"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;"
+                            >SISTEMA DE COORDENADAS</label
+                        >
+                        <select
+                            class="btn btn-glass"
+                            style="width: 100%; text-align: left;"
+                        >
+                            <option>EPSG:4326 (WGS 84)</option>
+                            <option>EPSG:3857 (Web Mercator)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 10px;"
+                        >Guardar Cambios</button
+                    >
+                </div>
+            </div>
+
+            <div class="glass-panel" style="padding: 24px;">
+                <h3
+                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: white;"
+                >
+                    󰭹 API & Map Server
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div
+                        style="padding: 12px; border-radius: 10px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);"
+                    >
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 4px;"
+                        >
+                            <span
+                                style="font-size: 0.85rem; font-weight: 600; color: var(--success);"
+                                >API Backend</span
+                            >
+                            <span
+                                style="font-size: 0.75rem; color: var(--text-muted);"
+                                >v1.0.4 - Activo</span
+                            >
+                        </div>
+                        <code
+                            style="font-size: 0.75rem; color: var(--text-muted);"
+                            >http://localhost:8000/api/v1</code
+                        >
+                    </div>
+
+                    <div
+                        style="padding: 12px; border-radius: 10px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.1);"
+                    >
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 4px;"
+                        >
+                            <span
+                                style="font-size: 0.85rem; font-weight: 600; color: var(--secondary);"
+                                >Servidor de Mapas</span
+                            >
+                            <span
+                                style="font-size: 0.75rem; color: var(--text-muted);"
+                                >TileServer GL - Activo</span
+                            >
+                        </div>
+                        <code
+                            style="font-size: 0.75rem; color: var(--text-muted);"
+                            >http://localhost:8080</code
+                        >
+                    </div>
+
+                    <button
+                        class="btn btn-glass"
+                        style="width: 100%; color: var(--warning); margin-top: 10px;"
+                        >Reiniciar Caché de Mapas</button
+                    >
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="margin-top: 24px; padding: 24px;">
+            <h3 style="margin-bottom: 20px; color: white;">
+                🛡️ Gestión de Acceso
+            </h3>
+            <div
+                style="background: rgba(255,255,255,0.02); border-radius: 14px; padding: 20px; border: 1px solid var(--border);"
+            >
+                <p
+                    style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;"
+                >
+                    Actualmente has iniciado sesión como <strong
+                        >admin@ftth-mapper.com</strong
+                    > (Super Admin).
+                </p>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-glass">Cambiar Contraseña</button>
+                    <button class="btn btn-glass">Gestionar Usuarios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</DashboardLayout>

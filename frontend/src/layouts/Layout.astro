@@ -8,20 +8,20 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 	<head>
 		<meta charset="UTF-8" />
 		<meta
 			name="description"
-			content="Sistema de Mapeo Manual FTTH - Diseño de Planta Externa"
+			content="Monitoreo FTTH - Redes de Fibra Óptica Premium"
 		/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
 			rel="stylesheet"
 		/>
 		<meta name="generator" content={Astro.generator} />
@@ -29,16 +29,14 @@ const { title } = Astro.props;
 	</head>
 	<body>
 		<slot />
+		<style is:global>
+			/* Global overrides that might conflict with global.css */
+			html,
+			body {
+				background-color: var(--bg-main);
+				margin: 0;
+				padding: 0;
+			}
+		</style>
 	</body>
 </html>
-
-<style is:global>
-	:root {
-		--sidebar-width: 260px;
-	}
-
-	body {
-		background-color: var(--bg-color);
-		color: var(--text-main);
-	}
-</style>

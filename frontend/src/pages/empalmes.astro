@@ -1,0 +1,76 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import DiagramadorEmpalmes from "../components/DiagramadorEmpalmes";
+---
+
+<DashboardLayout title="Empalmes - FTTH Mapper">
+    <div class="data-table-container animate-in">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;"
+        >
+            <div>
+                <h1
+                    style="font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;"
+                >
+                    Gestión de Empalmes
+                </h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    Visualiza y administra la continuidad de fibras en fusiones
+                    y empalmes mecanicos.
+                </p>
+            </div>
+        </div>
+
+        <div
+            class="glass-panel"
+            style="padding: 24px; min-height: 600px; position: relative;"
+        >
+            <div
+                id="no-node-selected"
+                style="text-align: center; padding: 100px 0; color: var(--text-muted);"
+            >
+                <div style="font-size: 3rem; margin-bottom: 24px;">󰈊</div>
+                <h2 style="color: white; margin-bottom: 8px;">
+                    Selecciona una Mufla u ODF
+                </h2>
+                <p>
+                    Para ver el diagrama de empalmes, selecciona un nodo desde
+                    el mapa o la lista de nodos.
+                </p>
+                <div style="margin-top: 24px;">
+                    <a
+                        href="/nodos"
+                        class="btn btn-primary"
+                        style="text-decoration: none;">Ir a Nodos</a
+                    >
+                    <a
+                        href="/"
+                        class="btn btn-glass"
+                        style="margin-left: 12px; text-decoration: none;"
+                        >Ir al Mapa</a
+                    >
+                </div>
+            </div>
+            <!-- El DiagramadorEmpalmes se cargará aquí si se pasa un ID por URL -->
+            <div id="diagram-container" style="display: none; height: 100%;">
+                <DiagramadorEmpalmes
+                    client:only="react"
+                    node={null}
+                    onClose={() => {}}
+                />
+            </div>
+        </div>
+    </div>
+</DashboardLayout>
+
+<script>
+    // Lógica para cargar un empalme específico si viene en la URL
+    const params = new URLSearchParams(window.location.search);
+    const nodeId = params.get("node_id");
+
+    if (nodeId) {
+        document.getElementById("no-node-selected")!.style.display = "none";
+        document.getElementById("diagram-container")!.style.display = "block";
+        // Aquí se podría pasar el ID al componente React via props o un Store global
+    }
+</script>

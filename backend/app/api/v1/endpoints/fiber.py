@@ -16,9 +16,9 @@ from ....utils.optical_physics import (
     calculate_output_power, calculate_route_loss
 )
 
-router = APIRouter()
+from ....utils.network import generate_fiber_strands, TIA_598_COLORS
 
-TIA_598_COLORS = [e.value for e in FiberColor]
+router = APIRouter()
 
 # ──────────────── FIBER STRANDS ────────────────
 
@@ -46,18 +46,7 @@ async def generate_strands(data: GenerateStrandsRequest, session: AsyncSession =
     if not route:
         raise HTTPException(status_code=404, detail="Route not found")
 
-    strands = []
-    for i in range(route.capacity):
-        color = TIA_598_COLORS[i % len(TIA_598_COLORS)]
-        buffer_num = (i // 6) + 1  # 6 strands per tube/buffer
-        strand = FiberStrand(
-            route_id=route.id,
-            color=color,
-            strand_number=i + 1,
-            buffer_number=buffer_num
-        )
-        session.add(strand)
-        strands.append(strand)
+    strands = await generate_fiber_strands(session, route.id, route.capacity)
 
     await session.commit()
     for s in strands:

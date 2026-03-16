@@ -1,0 +1,26 @@
+services:
+  db:
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    volumes:
+      - ./maps:/app/maps
+    ports:
+      - "8000:8000"
+
+  web:
+    ports:
+      - "80:80"
+    build:
+      args:
+        - PUBLIC_API_URL=http://localhost:8000/api/v1
+        - PUBLIC_MAP_TILE_URL=http://localhost:8080/styles/basic/style.json
+
+  mapserver:
+    volumes:
+      - ./maps:/data
+    ports:
+      - "8080:8080"

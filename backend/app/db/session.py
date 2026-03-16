@@ -3,7 +3,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Session
 from dotenv import load_dotenv
 
 # Importar TODOS los modelos para que SQLModel los registre
@@ -54,6 +54,7 @@ async def init_db():
     for i in range(max_retries):
         try:
             async with engine.begin() as conn:
+                await conn.run_sync(SQLModel.metadata.create_all)
                 if not IS_SQLITE:
                     # Enable PostGIS extension only on PostgreSQL
                     await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
@@ -64,8 +65,14 @@ async def init_db():
                     await conn.execute(text(
                         "CREATE INDEX IF NOT EXISTS idx_routes_path_gist ON routes USING GIST (path);"
                     ))
-                await conn.run_sync(SQLModel.metadata.create_all)
-            print("✅ Database initialized successfully.")
+            
+            # Seed initial data (run in a separate session)
+            from ..seed import seed_data
+            async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+            async with async_session() as session:
+                await seed_data(session)
+
+            print("✅ Database initialized and seeded successfully.")
             return
         except Exception as e:
             if i < max_retries - 1:
