@@ -95,39 +95,32 @@ export const ROUTE_CONFIG: Record<string, RouteConfigItem> = {
 
 // 1. API_BASE with robust sanitization for Astro
 const getRawApi = () => {
-    // Standard Astro client-side environment variables
+    // 1. Priority: Provided build-time/environment variable
     if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
-        return import.meta.env.PUBLIC_API_URL;
+        let envApi = import.meta.env.PUBLIC_API_URL;
+        if (envApi.startsWith('http') || envApi.startsWith('/')) return envApi;
     }
-    // In production, use relative path to leverage Nginx proxy on the same domain
+
+    // 2. Production detection: Use relative path for Nginx proxy proxying
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
         if (hostname.includes('neuraljira.tech')) {
             return '/api/v1';
         }
     }
-    // Fallback for local development
+
+    // 3. Development fallback
     return 'http://localhost:8000/api/v1';
 };
 
 let RawAPI = getRawApi();
 
-// Remove trailing slash to avoid double slashes or 307 redirects
+// Remove trailing slash
 RawAPI = RawAPI.replace(/\/$/, '');
 
-// Ensure /api/v1 prefix is present if it's NOT a relative path starting with /
-if (!RawAPI.endsWith('/api/v1') && !RawAPI.startsWith('/')) {
+// Ensure /api/v1 suffix if it's a domain but not present
+if (RawAPI.startsWith('http') && !RawAPI.endsWith('/api/v1')) {
     RawAPI = `${RawAPI}/api/v1`;
-}
-
-// Aggressive fix: If we're not on localhost/127.0.0.1 and NOT a relative path, force https
-if (typeof window !== 'undefined' && !RawAPI.startsWith('/')) {
-    const isLocal = window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname.startsWith('192.168.');
-    if (!isLocal) {
-        RawAPI = RawAPI.replace('http://', 'https://');
-    }
 }
 
 export const API_BASE = RawAPI;
