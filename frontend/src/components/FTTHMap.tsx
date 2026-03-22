@@ -7,6 +7,8 @@ import type { NodeData, RouteData, DrawingTool } from './map/types';
 import { NODE_CONFIG, ROUTE_CONFIG, API_BASE, MAP_TILE_URL } from './map/types';
 import { createNodeElement, toMapLibreCoord, CABLE_LAYER_STYLE } from './map/maplibreUtils';
 import MapToolbar from './map/MapToolbar';
+import MobileToolbar from './mobile/MobileToolbar';
+import MobileHUD from './mobile/MobileHUD';
 import FloatingStats from './map/FloatingStats';
 import { NodeInfoPanel, RouteInfoPanel } from './map/InfoPanels';
 import { AddNodeForm, CableForm } from './map/MapForms';
@@ -45,7 +47,7 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         return [];
     });
     const [activeTool, setActiveTool] = useState<DrawingTool>('select');
-    const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
+    const [selectedNode, setSelectedNode] = useState<NodeData|null>(null);
     const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
 
     // Forms & Modals
@@ -84,12 +86,10 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
     useEffect(() => {
         if (map.current || !mapContainer.current) return;
 
-        // Note: style URL points to our tileserver's JSON style
         let styleUrl = '';
         if (MAP_TILE_URL.endsWith('.json')) {
             styleUrl = MAP_TILE_URL;
         } else {
-            // Default to our tileserver's basic style
             styleUrl = `${MAP_TILE_URL.replace(/\/$/, '')}/styles/basic/style.json`;
         }
 
@@ -101,8 +101,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             maxZoom: 22,
             transformRequest: (url, resourceType) => {
                 let transformedUrl = url;
-
-                // Force HTTPS for all map resources in production (except localhost)
                 if (!transformedUrl.startsWith('http://localhost') &&
                     !transformedUrl.startsWith('http://127.0.0.1') &&
                     !transformedUrl.startsWith('http://192.168.')) {
@@ -121,11 +119,9 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         const m = map.current;
 
         m.on('load', () => {
-            // Add Sources for Routes and Pending Cable
             m.addSource('routes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
             m.addSource('pending-cable', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
-            // Layer for cables
             m.addLayer({
                 id: 'routes-layer',
                 type: 'line',
@@ -137,7 +133,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 }
             });
 
-            // Layer for pending cable
             m.addLayer({
                 id: 'pending-cable-layer',
                 type: 'line',
@@ -149,7 +144,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 }
             });
 
-            // Click handling
             m.on('click', (e) => {
                 const { lng, lat } = e.lngLat;
                 const tool = activeToolRef.current;
@@ -160,7 +154,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 }
             });
 
-            // Route interaction
             m.on('click', 'routes-layer', (e) => {
                 if (activeToolRef.current === 'select' && e.features?.[0]) {
                     const routeId = e.features[0].properties?.id;
@@ -173,7 +166,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         return () => m.remove();
     }, []);
 
-    // ── Memoized Route GeoJSON ──
     const routeGeoJSON = React.useMemo(() => ({
         type: 'FeatureCollection' as const,
         features: routes.map(r => {
@@ -199,16 +191,12 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         })
     }), [routes]);
 
-    // ── Sync Routes to Map ──
     useEffect(() => {
         if (!map.current) return;
         const source = map.current.getSource('routes') as maplibregl.GeoJSONSource;
-        if (source) {
-            source.setData(routeGeoJSON);
-        }
+        if (source) source.setData(routeGeoJSON);
     }, [routeGeoJSON]);
 
-    // ── Sync Markers (Nodes) ──
     useEffect(() => {
         if (!map.current) return;
         const m = map.current;
@@ -220,7 +208,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                     .setLngLat([node.location.lng, node.location.lat])
                     .addTo(m);
 
-                // Event Handling
                 el.addEventListener('mousedown', () => handleNodePressStart(node));
                 el.addEventListener('mouseup', handleNodePressEnd);
                 el.addEventListener('mouseleave', handleNodePressEnd);
@@ -241,14 +228,12 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                         setIsDrawingCable(true);
                     }
                 });
-
                 markers.current[node.id] = marker;
             } else {
                 markers.current[node.id].setLngLat([node.location.lng, node.location.lat]);
             }
         });
 
-        // Remove old markers
         Object.keys(markers.current).forEach(id => {
             if (!nodes.find(n => n.id === id)) {
                 markers.current[id].remove();
@@ -257,7 +242,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         });
     }, [nodes]);
 
-    // ── Sync Pending Cable ──
     useEffect(() => {
         if (!map.current) return;
         const source = map.current.getSource('pending-cable') as maplibregl.GeoJSONSource;
@@ -270,13 +254,13 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         }
     }, [cablePoints]);
 
-    // ── Data fetching ──
     const fetchNodes = useCallback(async () => {
         try {
             const res = await apiFetch(`${API_BASE}/nodes`);
             if (res.ok) {
                 const data = await res.json();
                 setNodes(data);
+                localStorage.setItem('ftth_nodes', JSON.stringify(data));
             }
         } catch (err) { console.error(`[Nodes] Failed: ${err}`); }
     }, []);
@@ -287,13 +271,13 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             if (res.ok) {
                 const data = await res.json();
                 setRoutes(data);
+                localStorage.setItem('ftth_routes', JSON.stringify(data));
             }
         } catch (err) { console.error(`[Routes] Failed: ${err}`); }
     }, []);
 
     useEffect(() => { fetchNodes(); fetchRoutes(); }, [fetchNodes, fetchRoutes]);
 
-    // ── Business Logic Ported ──
     const handleMapClick = (lat: number, lng: number) => {
         const toolToNodeType: Record<string, string> = {
             add_olt: 'OLT', add_mufla: 'MUFLA', add_nap: 'CAJA_NAP', add_client: 'CLIENTE_ONU',
@@ -349,22 +333,15 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
     const handleCablePoint = (lat: number, lng: number) => {
         const currentNodes = nodesRef.current;
         const currentCablePoints = cablePointsRef.current;
-
         const nearest = currentNodes.find(n => {
             const d = Math.sqrt(Math.pow(n.location.lat - lat, 2) + Math.pow(n.location.lng - lng, 2));
             return d < SNAP_DISTANCE;
         });
-
-        const point: [number, number] = nearest
-            ? [nearest.location.lng, nearest.location.lat]
-            : [lng, lat];
-
+        const point: [number, number] = nearest ? [nearest.location.lng, nearest.location.lat] : [lng, lat];
         if (currentCablePoints.length === 0) {
             if (!nearest || nearest.node_type === 'CLIENTE_ONU') return;
         }
-
         setCablePoints(prev => [...prev, point]);
-        // Also need a ref for isDrawingCable, or set it unconditionally if it's safe
         setIsDrawingCable(true);
     };
 
@@ -372,7 +349,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         if (cablePoints.length < 2) return;
         const [lastLng, lastLat] = cablePoints[cablePoints.length - 1];
         const endNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lastLat, 2) + Math.pow(n.location.lng - lastLng, 2)) < 0.0001);
-
         if (endNode) setShowCableForm(true);
         else setShowTerminationModal(true);
     };
@@ -383,11 +359,9 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         if (cablePoints.length < 2 || !cableName) return;
         const [sLng, sLat] = cablePoints[0];
         const [eLng, eLat] = cablePoints[cablePoints.length - 1];
-
         const findNode = (lat: number, lng: number) => nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lat, 2) + Math.pow(n.location.lng - lng, 2)) < 0.0001);
         const startNode = findNode(sLat, sLng);
         const endNode = findNode(eLat, eLng);
-
         const payload = {
             name: cableName, route_type: cableType, capacity: cableCapacity,
             start_node_id: startNode?.id, end_node_id: endNode?.id,
@@ -423,7 +397,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         const [sLng, sLat] = cablePoints[0];
         const startNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - sLat, 2) + Math.pow(n.location.lng - sLng, 2)) < 0.0001);
         if (!startNode) return;
-
         const nodeName = targetType === 'CLIENTE_ONU' ? clientForm.name : `${targetType} ${nodes.length + 1}`;
         const payload = {
             path: { coordinates: cablePoints },
@@ -431,7 +404,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             node_data: { name: nodeName, node_type: targetType, description: clientForm.address },
             route_data: { name: `Cable a ${nodeName}`, route_type: 'TRONCAL', capacity: 12 },
         };
-
         setIsSaving(true);
         try {
             const res = await apiFetch(`${API_BASE}/continuous-trace`, {
@@ -449,15 +421,60 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
     };
 
     const handleAddChild = (parent: NodeData, childType: string) => {
-        // Start cable drawing from parent
         setActiveTool('draw_cable');
         setCablePoints([[parent.location.lng, parent.location.lat]]);
         setIsDrawingCable(true);
-        setSelectedNode(null); // Close panel to clear view as requested
+        setSelectedNode(null);
     };
+    // ── Map Navigation Helpers ──
+    const handleCenterOnNode = useCallback((n: NodeData) => {
+        if (!map.current) return;
+        map.current.flyTo({
+            center: [n.location.lng, n.location.lat],
+            zoom: 18,
+            speed: 1.5,
+            curve: 1
+        });
+    }, []);
+
+    const handleCenterOnRoute = useCallback((r: RouteData) => {
+        if (!map.current || !r.path.coordinates.length) return;
+        // Simple center on first point for now, or calculate bounds
+        const [lng, lat] = r.path.coordinates[0];
+        map.current.flyTo({
+            center: [lng, lat],
+            zoom: 16,
+            speed: 1.2
+        });
+    }, []);
+
+    // Effect to handle navigation from other pages (via localStorage)
+    useEffect(() => {
+        const pending = localStorage.getItem('ftth_center_on_node');
+        if (pending && map.current) {
+            const data = JSON.parse(pending);
+            map.current.flyTo({
+                center: [data.lng, data.lat],
+                zoom: 18
+            });
+            localStorage.removeItem('ftth_center_on_node');
+            // Optionally auto-select it
+            const node = nodes.find(n => n.id === data.id);
+            if (node) setSelectedNode(node);
+        }
+    }, [nodes]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            {/* 1. Map container FIRST (baseline) */}
+            <div
+                ref={mapContainer}
+                className="map-container"
+                style={{ width: '100%', height: '100%', background: '#1a1a1a', zIndex: 1 }}
+            />
+
+            <MobileHUD nodeName={selectedNode?.name || 'PLANTA EXTERNA'} />
+
             <MapToolbar
                 activeTool={activeTool}
                 setActiveTool={(t) => { setActiveTool(t); setSelectedNode(null); setSelectedRoute(null); if (t === 'draw_cable') setCablePoints([]); }}
@@ -469,6 +486,14 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 onOpenLocationSelector={onOpenLocationSelector}
             />
 
+            <MobileToolbar 
+                onAddOLT={() => { setActiveTool('add_olt'); setPendingNodeType('OLT'); }}
+                isDrawing={activeTool === 'draw_cable'}
+                onToggleDrawing={() => setActiveTool(activeTool === 'draw_cable' ? 'select' : 'draw_cable')}
+                onOpenSearch={() => {}}
+                onToggleLayers={() => {}}
+            />
+
             <FloatingStats nodes={nodes} routes={routes} />
 
             {selectedNode && activeTool !== 'draw_cable' && (
@@ -476,7 +501,11 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                     node={selectedNode}
                     onClose={() => setSelectedNode(null)}
                     onDelete={handleDeleteNode}
-                    onInspect={(n) => onNodeDoubleClick?.(n)}
+                    onCenter={handleCenterOnNode}
+                    onInspect={(n) => {
+                        onNodeDoubleClick?.(n);
+                        setSelectedNode(null); // Clear local selection to show modal cleanly
+                    }}
                     onAddChild={handleAddChild}
                 />
             )}
@@ -486,7 +515,13 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             )}
 
             {selectedRoute && activeTool !== 'draw_cable' && (
-                <RouteInfoPanel route={selectedRoute} topOffset={selectedNode ? '490px' : '16px'} onClose={() => setSelectedRoute(null)} onDelete={handleDeleteRoute} />
+                <RouteInfoPanel 
+                    route={selectedRoute} 
+                    topOffset={selectedNode ? '490px' : '16px'} 
+                    onClose={() => setSelectedRoute(null)} 
+                    onDelete={handleDeleteRoute} 
+                    onCenter={handleCenterOnRoute}
+                />
             )}
 
             {showTerminationModal && (
@@ -507,12 +542,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 />
             )}
 
-            {showAddForm && (
-                <div className="add-node-marker" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -100%)', zIndex: 1000, pointerEvents: 'none' }}>
-                    {/* Visual indicator for center crosshair if needed */}
-                </div>
-            )}
-
             {showCableForm && (
                 <CableForm
                     cableName={cableName} setCableName={setCableName} cableType={cableType} setCableType={setCableType}
@@ -520,12 +549,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                     onSave={handleSaveCable} onCancel={cancelCable}
                 />
             )}
-
-            <div
-                ref={mapContainer}
-                className="map-container"
-                style={{ width: '100%', height: '100%', background: '#1a1a1a' }}
-            />
         </div>
     );
 };

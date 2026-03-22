@@ -1,37 +1,90 @@
-# Guía de Despliegue en Dokploy
+# 🚀 Guía de Despliegue en Dokploy — neuraljira.tech
 
-Dokploy es más minimalista que Coolify y se basa puramente en Docker Compose. Sigue estos pasos para desplegar tu proyecto:
+## Arquitectura
 
-## 1. Preparación en Dokploy
-1. Crea un nuevo **Project** en Dokploy en tu VPS.
-2. Crea un nuevo **Service** de tipo **Compose**.
-3. Conecta tu repositorio de GitHub o carga los archivos manualmente.
+Todo se sirve bajo **un solo dominio** (`neuraljira.tech`):
+- `/` → Frontend (Astro/React vía Nginx)
+- `/api/` → Backend API (FastAPI) — proxy por Nginx
+- `/tiles/` → TileServer GL (mapa propio) — proxy por Nginx
 
-## 2. Variables de Entorno
-Configura las siguientes variables en la pestaña **Environment** de tu servicio en Dokploy:
-- `POSTGRES_USER`: monitoreo (o el que prefieras)
-- `POSTGRES_PASSWORD`: TuContraseñaSegura
-- `POSTGRES_DB`: monitoreodb
-- `PUBLIC_API_URL`: https://tu-api.dominio.com/api/v1
-- `PUBLIC_MAP_TILE_URL`: https://tu-mapa.dominio.com/styles/basic/style.json
+## 1. Preparación
 
-## 3. Configuración de Dominios
-En Dokploy, a diferencia de Coolify, puedes asignar dominios a servicios específicos dentro de tu Compose:
-- **API (api)**: Asígnale un dominio y mapea el puerto interno `8000`.
-- **Web (web)**: Asígnale tu dominio principal y mapea el puerto interno `80`.
-- **MapServer (mapserver)**: Asígnale un subdominio (ej: `mapa.dominio.com`) y mapea el puerto interno `8080`.
+### En tu repositorio (local)
+```bash
+# Eliminar archivos obsoletos (ejecutar una sola vez)
+powershell -File cleanup.ps1
+# O manualmente:
+# del backend\fly.toml backend\fix_status.py backend\docker-compose.yml
+# del frontend\docker-compose.yml maps\docker-compose.yml
+# del docker-compose.test-prod.yml docker-compose.local.yml docker-compose.prod.yml
+# rmdir /s backend\scripts maps\styles\osm-bright
 
-## 4. Volúmenes Persistentes
-Asegúrate de que las rutas en tu VPS coincidan con el `docker-compose.prod.yml`:
-- `/var/lib/monitoreo/db` -> Almacén de base de datos PostGIS.
-- `/var/lib/monitoreo/maps` -> Donde movimos los archivos recientemente (PBF, mbtiles, estilos).
+git add -A
+git commit -m "chore: cleanup for production deployment"
+git push
+```
 
-## 5. Ruta de Pruebas (Staging/Production Testing)
-Para realizar pruebas de producción de manera segura antes de afectar el dominio principal:
-1. Crea un nuevo **Service** en Dokploy llamado `monitoreo-staging`.
-2. Usa una base de datos separada (ej: `monitoreodb_test`).
-3. Asigna dominios de prueba (ej: `test.tu-dominio.com`).
-4. Despliega desde la misma rama pero con variables de entorno diferentes para aislar el tráfico.
+### Subir colombia.mbtiles al VPS
+El archivo de mapa (~245MB) **no va en Git**. Súbelo manualmente:
+```bash
+# Desde tu máquina local (PowerShell/WSL):
+scp maps/colombia.mbtiles tu-usuario@tu-vps:/tmp/colombia.mbtiles
+```
+Luego en el VPS copiaremos el archivo al volumen Docker (ver paso 4).
 
-## 6. Aplicar y Desplegar
-Una vez configurado, haz clic en **Deploy**. Dokploy leerá tu `docker-compose.prod.yml` (o el respectivo de cada carpeta) y levantará todo automáticamente.
+## 2. Configurar Dokploy
+
+1. Crear un nuevo **Project** en Dokploy.
+2. Crear un nuevo **Service** tipo **Compose**.
+3. Conectar tu repositorio de GitHub.
+4. En **Compose Path** seleccionar: `docker-compose.yml` (la raíz).
+
+## 3. Variables de Entorno
+
+En la pestaña **Environment** de Dokploy:
+```env
+POSTGRES_USER=monitoreo
+POSTGRES_PASSWORD=TuContraseñaSegura123!
+POSTGRES_DB=monitoreodb
+CORS_ORIGINS=https://neuraljira.tech
+```
+
+> ⚠️ **Cambia la contraseña** por una segura. Las variables de frontend (`PUBLIC_API_URL`, `PUBLIC_MAP_TILE_URL`) ya están hardcodeadas en el compose como `/api/v1` y `/tiles/`.
+
+## 4. Provisionar el Archivo de Mapa
+
+Después del primer deploy, el volumen `map_data` existe pero está vacío. Copia el `.mbtiles`:
+
+```bash
+# En el VPS, encontrar el ID del volumen
+docker volume inspect <proyecto>_map_data
+
+# Copiar el archivo al volumen
+docker cp /tmp/colombia.mbtiles <contenedor_tileserver>:/data/colombia.mbtiles
+
+# Reiniciar tileserver
+docker restart <contenedor_tileserver>
+```
+
+Alternativamente, si usas Dokploy con volúmenes persistentes mapeados:
+```bash
+cp /tmp/colombia.mbtiles /var/lib/docker/volumes/<proyecto>_map_data/_data/colombia.mbtiles
+```
+
+## 5. Dominio
+
+En Dokploy, asignar el dominio al servicio **web**:
+- **Dominio**: `neuraljira.tech`
+- **Puerto interno**: `80`
+- **HTTPS**: Activar (Dokploy/Traefik genera certificado automático)
+
+Solo se necesita **un dominio**. No se necesitan subdominios para API ni mapas.
+
+## 6. Deploy
+
+Clic en **Deploy**. Dokploy leerá `docker-compose.yml` y levantará los 4 servicios.
+
+### Verificar
+- `https://neuraljira.tech` → Frontend
+- `https://neuraljira.tech/api/v1/health` → API (debe retornar 200)
+- `https://neuraljira.tech/tiles/styles/basic/style.json` → Estilo del mapa

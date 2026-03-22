@@ -1,28 +1,29 @@
 # Reglas del Agente Antigravity
 
-Este archivo define las restricciones y guías para el agente IA al trabajar en este proyecto.
+Este archivo define las restricciones y guías críticas para el desarrollo de FTTH Mapper.
 
-## Estructura de Carpetas (NO TOCAR / NO MOVER)
-
+## 🏗️ Estructura de Carpetas (NO TOCAR / NO MOVER)
 - `backend/app/`: Núcleo de la aplicación FastAPI.
-- `backend/models/`: Definición de modelos SQLModel/SQLAlchemy. No mover a carpetas externas sin permiso.
-- `backend/api/`: Endpoints de la API. Mantener la estructura de versiones (v1/).
-- `backend/scripts/`: Scripts de utilidad y mantenimiento de DB. No mover de aquí.
+- `backend/models/`: Definición de modelos SQLModel/SQLAlchemy.
 - `frontend/src/`: Código fuente de la interfaz Astro/React.
-- `frontend/public/`: Assets estáticos y mapas.
+- `frontend/src/components/mobile/`: **NUEVO** Componentes específicos para vista móvil.
+- `.agent/`: Carpeta oficial de reglas. **REGLA DE ORO**: Antes de crear nuevos archivos de reglas, verifica esta carpeta para evitar duplicados.
 
-## Reglas de Implementación
+## 🕸️ Jerarquía y Lógica de Red
+1.  **FLUJO OBLIGATORIO**: Toda conexión debe seguir la secuencia lógica:
+    *   **OLT** → **Mufla** o **Caja NAP**.
+    *   **Mufla** → **Mufla** o **Caja NAP**.
+    *   **Caja NAP** → **Cliente ONU**.
+2.  **ORIGEN DE CABLE**: Un cable **DEBE** nacer de un nodo (Icono). Se prohíben cables sueltos en el mapa.
+3.  **ODF**: Se considera parte integral de la OLT. No crear como nodo independiente a menos que se especifique.
 
-1. **Persistencia de Datos**: Nunca realices cambios destructivos en la base de datos sin un script de respaldo o aviso previo.
-2. **Multi-Tenancy**: Toda nueva funcionalidad debe respetar el aislamiento por `organization_id`.
-3. **Estética**: El frontend debe mantener el estilo "Premium Glassmorphism" y Modo Oscuro. No degradar la calidad visual por funcionalidad.
-4. **Imports**: Siempre verifica los imports relativos al mover archivos. Especialmente al usar `dotenv`, asegúrate de que el path al archivo `.env` sea correcto.
-5. **Configuración**: No sobrescribas el `DATABASE_URL` en `.env` sin verificar si el usuario está en modo VPS o Local.
+## 🎨 Diseño y UX (Premium Standard)
+1.  **Glassmorphism**: Paneles con `backdrop-filter: blur(20px)` y `rgba(10, 10, 20, 0.85)`.
+2.  **Colores Oficiales**: OLT (#ef4444), Mufla (#f97316), NAP (#3b82f6), Cliente (#10b981).
+3.  **Mobile-First**: Toda nueva pantalla o componente debe ser testeado en resolución móvil. La toolbar debe ser colapsable en pantallas pequeñas.
 
-## Docker y Despliegue
-
-- No modificar los archivos `docker-compose*.yml` a menos que sea necesario para añadir servicios nuevos solicitados.
-- Respetar las configuraciones de `fly.toml` y despliegue en Coolify.
-
-## Comunicación
-- Si un error de conexión persiste (como Timeout de DB), informa al usuario antes de intentar cambios masivos en el código de red.
+## 🛠️ Reglas de Implementación
+1.  **Persistencia**: Nunca borres datos de la DB sin respaldo.
+2.  **API Proxy**: Usa siempre rutas relativas `/api/v1/...`. **PROHIBIDO** usar `localhost:8000` en el código frontend.
+3.  **Multi-Tenancy**: Respetar siempre el filtrado por `organization_id`.
+4.  **No Duplicidad**: Antes de implementar una solución, busca si ya existe un componente similar para refactorizar en lugar de duplicar codigo (Ej: DiagramadorEmpalmes).

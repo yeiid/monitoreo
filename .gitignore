@@ -31,9 +31,13 @@ postgres_data/
 logs/
 *.log
 
-# Maps and Data Tools (Uploaded directly to VPS, do not commit!)
+# Maps and Data Tools (large files, uploaded directly to VPS)
 *.mbtiles
 *.osm.pbf
 planetiler.jar
 maps/data/
-backend/maps/data/
+backend/maps/
+
+# Agent/AI dirs
+.gemini/
+.agent/

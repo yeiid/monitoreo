@@ -188,15 +188,25 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                 (n: any) => `
             <tr class="animate-in">
                 <td><strong style="color:white;">${n.name}</strong></td>
-                    }
+                <td>
+                    <span class="badge ${BADGE_MAP[n.node_type] || 'badge-olt'}">
+                        ${NODE_LABELS[n.node_type] || n.node_type}
+                    </span>
+                </td>
+                <td style="font-size:0.82rem;font-family:monospace;">
+                    ${parseFloat(n.location?.lat).toFixed(5)}, ${parseFloat(n.location?.lng).toFixed(5)}
+                </td>
+                <td style="font-weight:bold;color:${n.optical_power_dbm < -25 ? 'var(--error)' : 'var(--success)'};">
+                    ${n.optical_power_dbm != null ? n.optical_power_dbm + ' dBm' : '—'}
                 </td>
                 <td style="font-size:0.85rem;color:var(--text-muted);">${
                     n.description || "—"
                 }</td>
                 <td>
-                    <button class="secondary-btn" style="font-size:0.78rem;padding:5px 12px;" onclick="deleteNode('${
-                        n.id
-                    }')">Eliminar</button>
+                    <div style="display:flex;gap:8px;">
+                        <button class="secondary-btn" style="font-size:0.72rem;padding:4px 10px;" onclick="centerOnNode('${n.id}')">Ubicar</button>
+                        <button class="danger-btn" style="font-size:0.72rem;padding:4px 10px;" onclick="deleteNode('${n.id}')">Eliminar</button>
+                    </div>
                 </td>
             </tr>
         `

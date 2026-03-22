@@ -1,13 +1,15 @@
 import React from 'react';
-import { Cable, Eye, Trash2 } from 'lucide-react';
+import { Cable, Eye, Trash2, MapPin } from 'lucide-react';
 import type { NodeData, RouteData } from './types';
 import { NODE_CONFIG, ROUTE_CONFIG } from './types';
+
 // ── Node Info Panel ──
 interface NodeInfoPanelProps {
     node: NodeData;
     onClose: () => void;
     onDelete: (id: string) => void;
     onInspect: (node: NodeData) => void;
+    onCenter?: (node: NodeData) => void;
     onAddChild?: (node: NodeData, childType: string) => void;
 }
 
@@ -17,7 +19,7 @@ const HIERARCHY: Record<string, string> = {
     'CAJA_NAP': 'CLIENTE_ONU'
 };
 
-export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onDelete, onInspect, onAddChild }) => {
+export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onDelete, onInspect, onCenter, onAddChild }) => {
     const cfg = NODE_CONFIG[node.node_type];
     const showInspect = ['OLT', 'ODF', 'MUFLA', 'CAJA_NAP'].includes(node.node_type);
     const childType = HIERARCHY[node.node_type];
@@ -44,12 +46,10 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
                 <span className="value">{cfg?.label || node.node_type}</span>
             </div>
             <div className="info-item">
-                <span className="label">Latitud</span>
-                <span className="value">{node.location.lat.toFixed(6)}</span>
-            </div>
-            <div className="info-item">
-                <span className="label">Longitud</span>
-                <span className="value">{node.location.lng.toFixed(6)}</span>
+                <span className="label">Ubicación</span>
+                <span className="value" style={{fontSize: '0.75rem', fontFamily: 'monospace'}}>
+                    {node.location.lat.toFixed(5)}, {node.location.lng.toFixed(5)}
+                </span>
             </div>
 
             {(node.node_type === 'MUFLA' || node.node_type === 'CAJA_NAP') && (
@@ -58,22 +58,6 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
                     <span className="value" style={{ color: (node.optical_power_dbm ?? 0) < -25 ? 'var(--error)' : 'var(--success)', fontWeight: 'bold' }}>
                         {node.optical_power_dbm != null ? `${node.optical_power_dbm} dBm` : 'No medido'}
                     </span>
-                </div>
-            )}
-
-            {node.node_type === 'ODF' && node.hardware_details && (
-                <div className="info-item">
-                    <span className="label">Puertos</span>
-                    <span className="value">
-                        {node.hardware_details.used_ports ?? 0} / {node.hardware_details.capacity ?? 48}
-                    </span>
-                </div>
-            )}
-
-            {node.description && (
-                <div className="info-item">
-                    <span className="label">Desc.</span>
-                    <span className="value">{node.description}</span>
                 </div>
             )}
 
@@ -89,14 +73,23 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
                     </button>
                 )}
 
+                <button 
+                    className="secondary-btn" 
+                    style={{ flex: 1, color: '#60a5fa', borderColor: 'rgba(96, 165, 250, 0.3)' }} 
+                    onClick={() => onCenter?.(node)}
+                >
+                    <MapPin size={14} style={{ marginRight: '6px' }} />
+                    Ubicar
+                </button>
+
                 {showInspect && (
                     <button className="secondary-btn" style={{ flex: 1 }} onClick={() => onInspect(node)}>
                         <Eye size={14} style={{ marginRight: '6px' }} />
-                        <span className="desktop-only">{node.node_type === 'OLT' ? 'Gestionar OLT' : node.node_type === 'ODF' ? 'Ver ODF' : 'Ver Empalmes'}</span>
-                        <span className="mobile-only">Gestionar</span>
+                        Gestionar
                     </button>
                 )}
-                <button className="danger-btn secondary-btn" style={{ flex: 0 }} onClick={() => onDelete(node.id)}>
+                
+                <button className="secondary-btn danger-btn" style={{ flex: 0, padding: '8px' }} onClick={() => onDelete(node.id)}>
                     <Trash2 size={14} />
                 </button>
             </div>
@@ -110,9 +103,10 @@ interface RouteInfoPanelProps {
     topOffset?: string;
     onClose: () => void;
     onDelete: (id: string) => void;
+    onCenter?: (route: RouteData) => void;
 }
 
-export const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ route, topOffset = '16px', onClose, onDelete }) => {
+export const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ route, topOffset = '16px', onClose, onDelete, onCenter }) => {
     const cfg = ROUTE_CONFIG[route.route_type] || ROUTE_CONFIG.TRONCAL;
 
     return (
@@ -131,12 +125,8 @@ export const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ route, topOffset
                 </span>
             </div>
 
-            <div className="nav-section-title" style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Especificaciones Físicas
-            </div>
-
             <div className="info-item">
-                <span className="label">Distancia Total</span>
+                <span className="label">Longitud</span>
                 <span className="value">
                     {route.length_meters && route.length_meters > 1000
                         ? `${(route.length_meters / 1000).toFixed(2)} km`
@@ -144,23 +134,17 @@ export const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ route, topOffset
                 </span>
             </div>
 
-            <div className="info-item">
-                <span className="label">Atenuación Fibra</span>
-                <span className="value" style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                    -{((route.length_meters || 0) / 1000 * 0.25).toFixed(2)} dB
-                </span>
-            </div>
-
-            {route.length_meters && route.length_meters > 2000 && (
-                <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '8px', color: '#f59e0b', fontSize: '0.78rem', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-                    <span><strong>Alerta de Bobina:</strong> Supera 1 bobina estándar.</span>
-                </div>
-            )}
-
-            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <button className="secondary-btn danger-btn" style={{ width: '100%', fontSize: '0.82rem' }} onClick={() => onDelete(route.id)}>
-                    Eliminar Cable
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                <button 
+                    className="secondary-btn" 
+                    style={{ flex: 1, color: '#60a5fa', borderColor: 'rgba(96, 165, 250, 0.3)' }}
+                    onClick={() => onCenter?.(route)}
+                >
+                    <MapPin size={14} style={{ marginRight: '6px' }} />
+                    Ubicar Cable
+                </button>
+                <button className="secondary-btn danger-btn" style={{ flex: 0, padding: '8px' }} onClick={() => onDelete(route.id)}>
+                    <Trash2 size={14} />
                 </button>
             </div>
         </div>

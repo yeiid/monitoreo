@@ -14,11 +14,7 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
         headers.set('Authorization', `Bearer ${token}`);
     }
 
-    // Auto-set Content-Type for JSON bodies
-    if (options.body && !headers.has('Content-Type')) {
-        headers.set('Content-Type', 'application/json');
-    }
-
+    console.log(`[FTTH API] Fetching: ${url}`, { method: options.method || 'GET' });
     const res = await fetch(url, { ...options, headers });
 
     // Si el token expiró (401), redirigir al login

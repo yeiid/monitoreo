@@ -1,10 +1,40 @@
-node_modules
-dist
-.astro
-backend/maps/data
-backend/maps/*.mbtiles
-backend/maps/*.pbf
+# Version control
 .git
+.gitignore
+.gitattributes
+
+# Dependencies (reinstalled in Docker)
+**/node_modules
+**/dist
+**/.astro
+**/build
+**/.next
+**/.cache
+**/venv
+**/__pycache__
+
+# Large map artifacts (mounted as volumes in production)
+maps/colombia.mbtiles
+maps/data
+backend/maps
+
+# IDE & Agent dirs
 .vscode
 .gemini
+.agent
 tmp
+
+# Docker files (not needed in build context)
+docker-compose*
+Dockerfile
+
+# Docs
+*.md
+!frontend/README.md
+
+# Database
+postgres_data
+
+# Environment files
+.env
+.env.*

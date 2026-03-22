@@ -200,3 +200,17 @@ async def delete_node(node_id: uuid.UUID, session: AsyncSession = Depends(get_se
     await session.delete(node)
     await session.commit()
 
+@router.get("/{node_id}/splices")
+async def get_node_splices(node_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+    """
+    Retrieve all logical splices and splitters configured inside a node.
+    Used for rendering the internal fiber diagram.
+    """
+    splices_result = await session.execute(select(Splice).where(Splice.node_id == node_id))
+    splitters_result = await session.execute(select(Splitter).where(Splitter.node_id == node_id))
+    
+    return {
+        "splices": splices_result.scalars().all(),
+        "splitters": splitters_result.scalars().all()
+    }
+

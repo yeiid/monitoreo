@@ -16,47 +16,49 @@ const Sidebar = () => {
     {
       title: 'Planta Externa',
       items: [
-        { name: 'Mapa de Red', icon: <Map size={18} />, href: '/' },
-        { name: 'Nodos & NAP', icon: <Radio size={18} />, href: '/nodos' },
-        { name: 'Cables & Rutas', icon: <Cable size={18} />, href: '/rutas' },
+        { name: 'Mapa de Red', icon: <Map size={18} strokeWidth={2.5} />, href: '/' },
+        { name: 'Nodos & NAP', icon: <Radio size={18} strokeWidth={2.5} />, href: '/nodos' },
+        { name: 'Cables & Rutas', icon: <Cable size={18} strokeWidth={2.5} />, href: '/rutas' },
       ],
     },
     {
       title: 'Inventario Lógico',
       items: [
-        { name: 'Splitters', icon: <Layers size={18} />, href: '/splitters' },
-        { name: 'Empalmes', icon: <Box size={18} />, href: '/empalmes' },
+        { name: 'Splitters', icon: <Layers size={18} strokeWidth={2.5} />, href: '/splitters' },
+        { name: 'Empalmes', icon: <Box size={18} strokeWidth={2.5} />, href: '/empalmes' },
       ],
     },
     {
       title: 'Administración',
       items: [
-        { name: 'Configuración', icon: <Settings size={18} />, href: '/config' },
-        { name: 'Estado del Sistema', icon: <Activity size={18} />, href: '/status' },
+        { name: 'Configuración', icon: <Settings size={18} strokeWidth={2.5} />, href: '/config' },
+        { name: 'Estado del Sistema', icon: <Activity size={18} strokeWidth={2.5} />, href: '/status' },
       ],
     },
   ];
 
   return (
-    <aside className={`sidebar ${!isOpen ? 'mobile-hidden' : ''}`}>
-      <button
-        className="mobile-only"
-        style={{ position: 'absolute', top: '24px', right: '24px', background: 'transparent', color: 'var(--text-muted)' }}
-        onClick={() => setIsOpen(false)}
-      >
-        <X size={24} />
-      </button>
+    <>
+      {isOpen && <div className="sidebar-overlay mobile-only" onClick={() => setIsOpen(false)} />}
+      <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+        <button
+          className="mobile-only btn btn-glass"
+          style={{ position: 'absolute', top: '24px', right: '24px', padding: '8px', zIndex: 100 }}
+          onClick={() => setIsOpen(false)}
+        >
+          <X size={20} />
+        </button>
 
-      <div className="logo-container">
+      <div className="logo-container animate-in">
         <div className="logo-glow">
-          <Cpu size={22} color="white" />
+          <Cpu size={24} color="#fff" strokeWidth={2} />
         </div>
         <span className="logo-text">MONITOREO</span>
       </div>
 
-      <nav className="sidebar-nav">
-        {navSections.map((section) => (
-          <div key={section.title} className="nav-group">
+      <nav className="sidebar-nav" style={{ animationDelay: '0.1s' }}>
+        {navSections.map((section, idx) => (
+          <div key={section.title} className="nav-group animate-in" style={{ animationDelay: `${0.15 + (idx * 0.1)}s` }}>
             <div className="nav-label">{section.title}</div>
             {section.items.map((item) => (
               <a
@@ -73,21 +75,26 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      <div style={{ padding: '0 24px', marginTop: 'auto' }}>
+      <div className="animate-in" style={{ padding: '0 16px', marginTop: 'auto', animationDelay: '0.4s' }}>
         <div style={{
           padding: '20px',
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: '16px',
-          border: '1px solid var(--border)'
+          background: 'rgba(255,255,255,0.02)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)'
         }}>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>STORAGE USED</p>
-          <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-            <div style={{ width: '65%', height: '100%', background: 'var(--primary)' }}></div>
+          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '10px', letterSpacing: '0.1em' }}>STORAGE USAGE</p>
+          <div style={{ height: '8px', background: 'rgba(0,0,0,0.5)', borderRadius: '10px', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)' }}>
+            <div style={{ width: '65%', height: '100%', background: 'var(--primary-gradient)', borderRadius: '10px', boxShadow: '0 0 10px var(--primary-glow)' }}></div>
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-primary)', marginTop: '8px' }}>1.2 GB / 2.0 GB</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+             <p style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 600 }}>1.2 GB</p>
+             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>2.0 GB Limit</p>
+          </div>
         </div>
       </div>
     </aside>
+    </>
   );
 };
 
