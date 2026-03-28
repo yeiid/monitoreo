@@ -93,9 +93,11 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                     c.name
                 }</span>
             </div>
-        `
-        ).join("");
-       async function loadRoutes() {
+            </div>
+        `;
+    }
+
+    async function loadRoutes() {
         try {
             const res = await fetch(`${API_BASE}/routes`);
             if (!res.ok) throw new Error("API error");
@@ -312,4 +314,5 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         gap: 12px;
     }
-</style></script>
+</style>
+
