@@ -349,8 +349,12 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         if (cablePoints.length < 2) return;
         const [lastLng, lastLat] = cablePoints[cablePoints.length - 1];
         const endNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lastLat, 2) + Math.pow(n.location.lng - lastLng, 2)) < 0.0001);
-        if (endNode) setShowCableForm(true);
-        else setShowTerminationModal(true);
+        if (endNode) {
+            setCableCapacity(endNode.node_type === 'CLIENTE_ONU' ? 4 : 16);
+            setShowCableForm(true);
+        } else {
+            setShowTerminationModal(true);
+        }
     };
 
     const cancelCable = () => { setCablePoints([]); setIsDrawingCable(false); setShowCableForm(false); setActiveTool('select'); };
@@ -381,9 +385,15 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
     };
 
     const handleDeleteNode = async (nodeId: string) => {
-        try { await apiFetch(`${API_BASE}/nodes/${nodeId}`, { method: 'DELETE' }); } catch { }
-        setNodes(prev => prev.filter(n => n.id !== nodeId));
-        setSelectedNode(null);
+        try { 
+            await apiFetch(`${API_BASE}/nodes/${nodeId}`, { method: 'DELETE' }); 
+            setNodes(prev => prev.filter(n => n.id !== nodeId));
+            // Frontend Cascade: Filter out routes connected to this node
+            setRoutes(prev => prev.filter(r => r.start_node_id !== nodeId && r.end_node_id !== nodeId));
+            setSelectedNode(null);
+        } catch { 
+            alert("No se pudo eliminar el nodo.");
+        }
     };
 
     const handleDeleteRoute = async (routeId: string) => {
@@ -402,7 +412,11 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             path: { coordinates: cablePoints },
             start_node_id: startNode.id,
             node_data: { name: nodeName, node_type: targetType, description: clientForm.address },
-            route_data: { name: `Cable a ${nodeName}`, route_type: 'TRONCAL', capacity: 12 },
+            route_data: { 
+                name: `Cable a ${nodeName}`, 
+                route_type: targetType === 'CLIENTE_ONU' ? 'ACOMETIDA' : 'DISTRIBUCION', 
+                capacity: targetType === 'CLIENTE_ONU' ? 4 : 16 
+            },
         };
         setIsSaving(true);
         try {
@@ -473,8 +487,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 style={{ width: '100%', height: '100%', background: '#1a1a1a', zIndex: 1 }}
             />
 
-            <MobileHUD nodeName={selectedNode?.name || 'PLANTA EXTERNA'} />
-
             <MapToolbar
                 activeTool={activeTool}
                 setActiveTool={(t) => { setActiveTool(t); setSelectedNode(null); setSelectedRoute(null); if (t === 'draw_cable') setCablePoints([]); }}
@@ -490,8 +502,8 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 onAddOLT={() => { setActiveTool('add_olt'); setPendingNodeType('OLT'); }}
                 isDrawing={activeTool === 'draw_cable'}
                 onToggleDrawing={() => setActiveTool(activeTool === 'draw_cable' ? 'select' : 'draw_cable')}
-                onOpenSearch={() => {}}
-                onToggleLayers={() => {}}
+                onOpenSearch={() => onOpenLocationSelector?.()}
+                onToggleLayers={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
             />
 
             <FloatingStats nodes={nodes} routes={routes} />

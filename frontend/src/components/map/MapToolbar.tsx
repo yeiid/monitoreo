@@ -25,91 +25,83 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
     onOpenLocationSelector,
 }) => {
     return (
-        <div className="map-toolbar">
+        <div className="map-toolbar-hud">
+            {/* ── SECCIÓN 1: NAVEGACIÓN ── */}
+            <div className="toolbar-section">
+                <button
+                    className={`hud-btn ${activeTool === 'select' ? 'active' : ''}`}
+                    onClick={() => setActiveTool('select')}
+                    title="Modo Selección"
+                >
+                    <MousePointer size={18} />
+                    <span>Navegar</span>
+                </button>
 
-            {/* ── Herramientas básicas ── */}
-            <button
-                className={`toolbar-btn ${activeTool === 'select' ? 'active' : ''}`}
-                onClick={() => setActiveTool('select')}
-                title="Seleccionar nodo o cable"
-            >
-                <MousePointer size={16} strokeWidth={2.5} />
-                <span>Seleccionar</span>
-            </button>
-
-            <button
-                className="toolbar-btn"
-                onClick={onOpenLocationSelector}
-                title="Cambiar ubicación del mapa"
-            >
-                <MapPin size={16} strokeWidth={2.5} />
-                <span>Ubicación</span>
-            </button>
-
-            {/* ── Nodo raíz ── */}
-            <div className="nav-section-title" style={{ padding: '12px 4px 4px' }}>
-                Nodo Raíz
+                <button
+                    className="hud-btn"
+                    onClick={onOpenLocationSelector}
+                    title="Cambiar Ubicación"
+                >
+                    <MapPin size={18} />
+                    <span>Lugar</span>
+                </button>
             </div>
 
-            <button
-                className={`toolbar-btn ${activeTool === 'add_olt' ? 'active' : ''}`}
-                onClick={() => setActiveTool('add_olt')}
-                title="Colocar una OLT en el mapa"
-            >
-                <span className="dot" style={{ background: NODE_CONFIG.OLT.color }} />
-                <span>Agregar OLT</span>
-            </button>
+            <div className="toolbar-divider" />
 
-            {/* ── Cableado ── */}
-            <div className="nav-section-title" style={{ padding: '12px 4px 4px' }}>
-                Cableado
+            {/* ── SECCIÓN 2: INFRAESTRUCTURA ── */}
+            <div className="toolbar-section">
+                <button
+                    className={`hud-btn ${activeTool === 'add_olt' ? 'active' : ''}`}
+                    onClick={() => setActiveTool('add_olt')}
+                    title="Agregar OLT"
+                >
+                    <div className="dot-indicator" style={{ background: NODE_CONFIG.OLT.color }} />
+                    <span>OLT</span>
+                </button>
+
+                <button
+                    disabled={!hasOLT}
+                    className={`hud-btn ${activeTool === 'draw_cable' ? 'active' : ''} ${!hasOLT ? 'disabled' : ''}`}
+                    onClick={() => setActiveTool('draw_cable')}
+                    title={hasOLT ? 'Trazar Cableado' : 'Requiere OLT'}
+                >
+                    <Cable size={18} />
+                    <span>Cable</span>
+                </button>
             </div>
 
-            <button
-                disabled={!hasOLT}
-                className={`toolbar-btn ${activeTool === 'draw_cable' ? 'active' : ''} ${!hasOLT ? 'disabled' : ''}`}
-                onClick={() => setActiveTool('draw_cable')}
-                title={hasOLT ? 'Dibujar un cable desde un nodo' : 'Primero debes agregar una OLT'}
-            >
-                <Cable size={16} strokeWidth={2.5} />
-                <span>Dibujar Cable</span>
-            </button>
-
-            {/* ── Controles de dibujo activo ── */}
+            {/* ── SECCIÓN 3: ACCIONES DE DIBUJO (CONDICIONAL) ── */}
             {isDrawingCable && (
                 <>
-                    <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                    <div className="toolbar-divider green" />
+                    <div className="toolbar-section drawing-actions">
+                        <button
+                            className="hud-btn success-intent"
+                            onClick={onFinishCable}
+                            title="Finalizar Trazo"
+                        >
+                            <Check size={18} />
+                            <span>Confirmar ({cablePointCount})</span>
+                        </button>
 
-                    <button
-                        className="toolbar-btn"
-                        onClick={onFinishCable}
-                        style={{ color: 'var(--success)', borderColor: 'rgba(16,185,129,0.3)' }}
-                        title="Finalizar y guardar el cable"
-                    >
-                        <Check size={16} strokeWidth={3} />
-                        <span>Finalizar ({cablePointCount} pts)</span>
-                    </button>
-
-                    <button
-                        className="toolbar-btn"
-                        onClick={onCancelCable}
-                        style={{ color: 'var(--error)', borderColor: 'rgba(239,68,68,0.3)' }}
-                        title="Cancelar el trazo actual"
-                    >
-                        <X size={16} strokeWidth={3} />
-                        <span>Cancelar</span>
-                    </button>
+                        <button
+                            className="hud-btn danger-intent"
+                            onClick={onCancelCable}
+                            title="Borrar Trazo"
+                        >
+                            <X size={18} />
+                            <span>Cancelar</span>
+                        </button>
+                    </div>
                 </>
             )}
 
-            {/* ── Tip de flujo ── */}
+            {/* ── TIP DISCRETO ── */}
             {!isDrawingCable && hasOLT && (
-                <p style={{
-                    fontSize: '0.72rem', color: 'var(--text-muted)',
-                    padding: '12px 4px 0', lineHeight: '1.45'
-                }}>
-                    💡 Haz <strong style={{ color: 'var(--text-secondary)' }}>doble clic</strong> sobre un nodo para trazar un cable y crear conexiones.
-                </p>
+                <div className="toolbar-hint desktop-only">
+                    <span>💡 Doble clic para trazar rápido</span>
+                </div>
             )}
         </div>
     );

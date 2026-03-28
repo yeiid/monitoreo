@@ -178,8 +178,10 @@ export const CableForm: React.FC<CableFormProps> = ({
         <div className="form-group">
             <label>Capacidad (Fibras / Hilos)</label>
             <select className="form-input" value={cableCapacity} onChange={(e) => setCableCapacity(Number(e.target.value))}>
+                <option value={4}>4 Fibras (Cliente)</option>
                 <option value={6}>6 Fibras</option>
                 <option value={12}>12 Fibras</option>
+                <option value={16}>16 Fibras (Mufla/NAP)</option>
                 <option value={24}>24 Fibras</option>
                 <option value={48}>48 Fibras</option>
                 <option value={96}>96 Fibras</option>

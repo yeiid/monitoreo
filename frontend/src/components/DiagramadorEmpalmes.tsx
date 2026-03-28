@@ -67,8 +67,49 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
 
           // Transform Routes to Nodes
           const newNodes: any[] = [];
-          routesData.forEach((route: any, idx: number) => {
+          
+          // Determine hierarchical default for this node
+          const hierarchyDefault = node.node_type === 'CLIENTE_ONU' ? 4 : 16;
+
+          // Manually fetch strands for each route because /routes doesn't include them
+          for (let idx = 0; idx < routesData.length; idx++) {
+            const route = routesData[idx];
             const isInput = route.end_node_id === node.id;
+            
+            // Fetch strands
+            let buffers: any[] = [];
+            try {
+              const strandsRes = await apiFetch(`${API_BASE}/fiber/strands?route_id=${route.id}`);
+              if (strandsRes.ok) {
+                let strandsList = await strandsRes.json();
+                
+                // Fallback: If no strands exist (legacy route), ask backend to generate them
+                // We also override 12 (old default) if we are in a 16-fiber environment
+                if (strandsList.length === 0 || (strandsList.length === 12 && hierarchyDefault === 16)) {
+                  const genRes = await apiFetch(`${API_BASE}/fiber/strands/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ route_id: route.id, capacity: hierarchyDefault })
+                  });
+                  if (genRes.ok) {
+                    strandsList = await genRes.json();
+                  }
+                }
+
+                // Group strands into buffers (typically 6 or 12 per buffer)
+                // For simplicity assuming 12 strands per buffer tube (standard TIA-598)
+                const tubes: Record<number, any> = {};
+                strandsList.forEach((st: any) => {
+                  const tubeIdx = Math.floor((st.index - 1) / 12) + 1;
+                  if (!tubes[tubeIdx]) tubes[tubeIdx] = { tube_number: tubeIdx, color: FIBER_COLORS[FIBER_COLOR_ORDER[(tubeIdx-1)%12]], strands: [] };
+                  tubes[tubeIdx].strands.push(st);
+                });
+                buffers = Object.values(tubes);
+              }
+            } catch (e) {
+              console.error("Failed to fetch strands for route", route.id, e);
+            }
+
             newNodes.push({
               id: route.id,
               type: 'cable',
@@ -76,12 +117,12 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
               data: { 
                 label: route.name, 
                 side: isInput ? 'input' : 'output', 
-                buffers: route.buffers || [],
+                buffers: buffers,
                 routeId: route.id,
                 powers: {} // Will be populated by backend if needed
               }
             });
-          });
+          }
 
           // Add Splitters from backend if any
           const splitterNodes: any[] = [];
@@ -126,33 +167,43 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
   const onConnect = useCallback(
     (params: Connection) => {
       let strokeColor = '#a78bfa';
-      if (params.source?.toString().includes('strand') || params.sourceHandle?.includes('strand')) {
-        const handleParts = params.sourceHandle?.split('-') || [];
-        const lastPart = handleParts.pop() || '0';
-        const idx = parseInt(lastPart);
-        if (!isNaN(idx)) {
-          strokeColor = FIBER_COLORS[FIBER_COLOR_ORDER[idx % 12]] || strokeColor;
-        }
-      } else if (params.source?.toString().includes('splitter') || params.sourceHandle?.includes('out-')) {
+
+      // Advanced Color Extraction: Search in nodes for the source strand's color
+      const sourceNode = nodes.find(n => n.id === params.source);
+      if (sourceNode?.type === 'cable' && params.sourceHandle) {
+         // Flatten buffers to find the strand
+         const allStrands = (sourceNode.data as any).buffers?.flatMap((b: any) => b.strands) || [];
+         const strand = allStrands.find((s: any) => s.id === params.sourceHandle);
+         if (strand) {
+             strokeColor = FIBER_COLORS[strand.color] || strokeColor;
+         }
+      } else if (params.source?.toString().includes('splitter')) {
         strokeColor = '#22d3ee';
       }
 
       setEdges((eds) => addEdge({
         ...params,
         animated: true,
-        style: { stroke: strokeColor, strokeWidth: 3, filter: `drop-shadow(0 0 5px ${strokeColor}66)` }
+        style: { 
+          stroke: strokeColor, 
+          strokeWidth: 3, 
+          filter: `drop-shadow(0 0 5px ${strokeColor}66)` 
+        }
       } as any, eds));
     },
-    [setEdges]
+    [nodes, setEdges]
   );
 
   const addSplitter = () => {
+    const type = prompt("Tipo de Splitter (1x4, 1x8, 1x16):", "1x16");
+    if (!type) return;
+
     const newId = `temp-${Date.now()}`;
     setNodes((nds) => [...nds, {
       id: newId,
       type: 'splitter',
       position: { x: 400, y: nds.filter(n => n.type === 'splitter').length * 150 + 100 },
-      data: { label: `Splitter ${nds.filter(n => n.type === 'splitter').length + 1}`, splitterType: splitterType, powers: {} }
+      data: { label: `Splitter ${nds.filter(n => n.type === 'splitter').length + 1}`, splitterType: type, powers: {} }
     }]);
   };
 
@@ -222,7 +273,7 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content">
+      <div className="modal-content" style={{ maxWidth: '1200px', width: '95%', height: '85vh', minHeight: '600px' }}>
         <div className="modal-header" style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ padding: '8px', background: 'rgba(167, 139, 250, 0.1)', borderRadius: '10px' }}>

@@ -27,3 +27,5 @@ Este archivo define las restricciones y guías críticas para el desarrollo de F
 2.  **API Proxy**: Usa siempre rutas relativas `/api/v1/...`. **PROHIBIDO** usar `localhost:8000` en el código frontend.
 3.  **Multi-Tenancy**: Respetar siempre el filtrado por `organization_id`.
 4.  **No Duplicidad**: Antes de implementar una solución, busca si ya existe un componente similar para refactorizar en lugar de duplicar codigo (Ej: DiagramadorEmpalmes).
+5.  **Simplicidad y CSS Seguro**: NO crear implementaciones innecesarias o sobre-diseñadas. Evitar sobrescribir reglas de layout críticas (`display: flex`) con clases de utilidad genéricas como `.mobile-only { display: block !important }`, ya que esto genera "código basura" visual y rompe la interfaz.
+6.  **Integridad Lógica de Conexiones (Fibras)**: Nunca eliminar la lógica de generación y agrupamiento (Buffers) de hilos de fibra óptica (TIA-598) ni su endpoint `/fiber/strands/generate`. La capacidad estándar de hilos jerárquicos se maneja estrictamente como: `MUFLA/CAJA_NAP = 16 hilos` y `CLIENTE_ONU = 4 hilos`.

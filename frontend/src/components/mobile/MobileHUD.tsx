@@ -33,7 +33,7 @@ const MobileHUD: React.FC<MobileHUDProps> = ({
     if (!visible) return null;
 
     return (
-        <div className="mobile-hud-container animate-in">
+        <div className="mobile-hud-container mobile-only animate-in">
             <div className="hud-content">
                 <div className="hud-left">
                     <span className="time">{time}</span>
@@ -56,10 +56,10 @@ const MobileHUD: React.FC<MobileHUDProps> = ({
             <style dangerouslySetInnerHTML={{ __html: `
                 .mobile-hud-container {
                     position: fixed;
-                    top: 12px;
+                    top: 80px;
                     left: 12px;
                     right: 12px;
-                    z-index: 1000;
+                    z-index: 900;
                     pointer-events: none;
                 }
 

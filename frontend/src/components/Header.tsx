@@ -51,7 +51,7 @@ const Header = () => {
           <span>Sincronizado</span>
         </div>
 
-        <button className="btn btn-glass" style={{ padding: '10px', position: 'relative', borderRadius: 'var(--radius-md)' }}>
+        <button className="btn btn-glass desktop-only" style={{ padding: '10px', position: 'relative', borderRadius: 'var(--radius-md)' }}>
           <Bell size={20} />
           <span style={{
             position: 'absolute',
@@ -66,19 +66,19 @@ const Header = () => {
           }}></span>
         </button>
 
-        <div style={{ width: '1px', height: '32px', background: 'var(--border)' }}></div>
+        <div className="desktop-only" style={{ width: '1px', height: '32px', background: 'var(--border)' }}></div>
 
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '14px',
-          padding: '6px 6px 6px 18px',
+          padding: '6px',
           background: 'rgba(255,255,255,0.02)',
           borderRadius: 'var(--radius-lg)',
           border: '1px solid var(--border)',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingLeft: '12px' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white', lineHeight: '1.2' }}>
               {user?.full_name || 'Operador'}
             </span>
@@ -100,7 +100,7 @@ const Header = () => {
           </div>
           <button
             className="btn btn-glass"
-            style={{ padding: '10px', color: 'var(--error)', marginLeft: '4px' }}
+            style={{ padding: '10px', color: 'var(--error)' }}
             onClick={logout}
             title="Cerrar sesión"
           >
