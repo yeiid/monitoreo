@@ -166,8 +166,23 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                     'line-color': '#facc15',
                     'line-width': 3,
                     'line-dasharray': [2, 2],
+                    'line-opacity': 0.8
                 }
             });
+
+            // Pulsing animation for pending cable
+            let opacityStep = 0;
+            const animateCable = () => {
+                if (!m) return;
+                opacityStep = (opacityStep + 0.08) % (Math.PI * 2);
+                const opacity = 0.4 + Math.abs(Math.sin(opacityStep)) * 0.6;
+                if (m.getLayer('pending-cable-layer')) {
+                    m.setPaintProperty('pending-cable-layer', 'line-opacity', opacity);
+                }
+                requestAnimationFrame(animateCable);
+            };
+            animateCable();
+
 
             m.on('click', (e) => {
                 const { lng, lat } = e.lngLat;
@@ -541,14 +556,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 onFinishCable={finishCable}
                 onCancelCable={cancelCable}
                 onOpenLocationSelector={onOpenLocationSelector}
-            />
-
-            <MobileToolbar 
-                onAddOLT={() => { setActiveTool('add_olt'); setPendingNodeType('OLT'); }}
-                isDrawing={activeTool === 'draw_cable'}
-                onToggleDrawing={() => setActiveTool(activeTool === 'draw_cable' ? 'select' : 'draw_cable')}
-                onOpenSearch={() => onOpenLocationSelector?.()}
-                onToggleLayers={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
             />
 
             <FloatingStats nodes={nodes} routes={routes} />

@@ -95,80 +95,72 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
             </div>
         `
         ).join("");
-    }
-
-    async function loadRoutes() {
+       async function loadRoutes() {
         try {
             const res = await fetch(`${API_BASE}/routes`);
             if (!res.ok) throw new Error("API error");
             const routes = await res.json();
+            localStorage.setItem("ftth_routes", JSON.stringify(routes));
             renderRoutes(routes);
         } catch {
-            const tbody = document.getElementById("routes-tbody");
-            if (tbody)
-                tbody.innerHTML =
-                    '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--error);">Error conectando con la API.</td></tr>';
+            const cached = localStorage.getItem("ftth_routes");
+            if (cached) renderRoutes(JSON.parse(cached));
         }
     }
+
+    (window as any).centerOnRoute = function(id: string) {
+        const routes = JSON.parse(localStorage.getItem('ftth_routes') || '[]');
+        const r = routes.find((route: any) => route.id === id);
+        if (r) {
+            localStorage.setItem('ftth_center_on_route', JSON.stringify(r));
+            window.location.href = '/';
+        }
+    };
 
     function renderRoutes(routes: any[]) {
         const tbody = document.getElementById("routes-tbody")!;
         if (routes.length === 0) {
-            tbody.innerHTML =
-                '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No hay cables registrados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay rutas registradas</td></tr>';
             return;
         }
 
-        tbody.innerHTML = routes
-            .map(
-                (r: any) => `
-            <tr class="animate-in">
-                <td><strong style="color:white;">${r.name}</strong></td>
+        const typeColors: Record<string, string> = {
+            TRONCAL: '#A855F7',
+            DISTRIBUCION: '#3B82F6',
+            ACOMETIDA: '#10B981'
+        };
+
+        tbody.innerHTML = routes.map(r => `
+            <tr class="animate-in glass-row">
                 <td>
-                    <span class="badge" style="
-                        background: ${
-                            r.route_type === "TRONCAL"
-                                ? "rgba(168, 85, 247, 0.1)"
-                                : r.route_type === "DISTRIBUCION"
-                                ? "rgba(59, 130, 246, 0.1)"
-                                : "rgba(16, 185, 129, 0.1)"
-                        };
-                        color: ${
-                            r.route_type === "TRONCAL"
-                                ? "#A855F7"
-                                : r.route_type === "DISTRIBUCION"
-                                ? "#3B82F6"
-                                : "#10B981"
-                        };
-                    ">
-                        ${r.route_type || "TRONCAL"}
-                    </span>
+                    <div class="name-cell">
+                        <span class="type-icon">🧵</span>
+                        <div class="name-info">
+                            <span class="node-name">${r.name}</span>
+                            <span class="node-id">#${r.id.slice(0, 8)}</span>
+                        </div>
+                    </div>
                 </td>
-                <td><span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text-secondary);">${
-                    r.capacity
-                } hilos</span></td>
+                <td><span class="modern-badge" style="background: ${typeColors[r.route_type]}1a; color: ${typeColors[r.route_type]}">${r.route_type}</span></td>
+                <td><span class="modern-badge" style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">${r.capacity} Hilos</span></td>
                 <td>
-                    <button class="btn btn-glass" style="font-size:0.75rem;padding:6px 12px;" onclick="generateStrands('${
-                        r.id
-                    }')">
+                    <button class="action-btn-wide" onclick="generateStrands('${r.id}')">
                         Generar Hilos
                     </button>
                 </td>
-                <td style="font-size:0.85rem;color:var(--text-muted);">${
-                    r.description || "—"
-                }</td>
+                <td class="desc-cell">${r.description || '—'}</td>
                 <td>
-                     <div style="display: flex; gap: 8px;">
-                         <button class="btn btn-glass" style="padding: 6px 12px; font-size: 0.78rem;">Ver</button>
-                        <button class="btn btn-glass" style="padding: 6px 12px; font-size: 0.78rem; color: var(--error);" onclick="deleteRoute('${
-                            r.id
-                        }')">Eliminar</button>
+                    <div class="action-group">
+                        <button class="action-btn locate" onclick="centerOnRoute('${r.id}')">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteRoute('${r.id}')">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
                     </div>
                 </td>
             </tr>
-        `
-            )
-            .join("");
+        `).join("");
     }
 
     (window as any).generateStrands = async function (routeId: string) {
@@ -178,24 +170,146 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ route_id: routeId }),
             });
-            if (res.ok) {
-                const strands = await res.json();
-                alert(
-                    `Se generaron ${strands.length} hilos con colores TIA-598.`
-                );
-            }
+            if (res.ok) alert(`Hilos generados con éxito.`);
         } catch (e) {
             alert("Error generando hilos.");
         }
     };
 
-    (window as any).deleteRoute = async function (id: string) {
+    (window as any).deleteRoute = async function(id: string) {
         if (!confirm("¿Eliminar este cable?")) return;
         try {
-            await fetch(`${API_BASE}/routes/${id}`, { method: "DELETE" });
+            const res = await fetch(`${API_BASE}/routes/${id}`, { method: "DELETE" });
+            if (res.ok) loadRoutes();
         } catch {}
-        loadRoutes();
     };
 
     loadRoutes();
 </script>
+
+<style is:global>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-hover: rgba(255, 255, 255, 0.06);
+    }
+
+    .data-table-container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .glass-panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        backdrop-filter: blur(12px);
+        margin-bottom: 24px;
+        transition: all 0.3s ease;
+    }
+
+    /* Modern Table Styles (Compatible with nodos.astro) */
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+    .data-table th {
+        padding: 16px 24px;
+        text-align: left;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        border: none;
+    }
+
+    .glass-row {
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.2s ease;
+    }
+
+    .glass-row:hover {
+        background: var(--glass-hover);
+        transform: scale(1.002);
+    }
+
+    .glass-row td {
+        padding: 16px 24px;
+        border-top: 1px solid var(--glass-border);
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .glass-row td:first-child {
+        border-left: 1px solid var(--glass-border);
+        border-radius: 12px 0 0 12px;
+    }
+
+    .glass-row td:last-child {
+        border-right: 1px solid var(--glass-border);
+        border-radius: 0 12px 12px 0;
+    }
+
+    .name-cell { display: flex; align-items: center; gap: 14px; }
+    .name-info { display: flex; flex-direction: column; }
+    .node-name { color: white; font-weight: 600; font-size: 0.95rem; }
+    .node-id { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
+
+    .modern-badge {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .action-btn-wide {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn-wide:hover {
+        background: rgba(139, 92, 246, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .action-group { display: flex; gap: 8px; }
+
+    .action-btn {
+        width: 34px; height: 34px; border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255,255,255,0.03); color: white;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+
+    .action-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+    .action-btn.locate:hover { color: #A855F7; border-color: #A855F7; }
+    .action-btn.delete:hover { color: #f43f5e; border-color: #f43f5e; }
+
+    .empty-state { text-align: center; padding: 80px 0; color: var(--text-muted); font-style: italic; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in { animation: fadeIn 0.4s ease forwards; }
+
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+    }
+</style></script>
