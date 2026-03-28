@@ -598,10 +598,13 @@ h1, h2, h3, h4, h5 {
 
 .mobile-only { display: none !important; }
 .desktop-only { display: inline-flex !important; }
+.hidden-mobile { display: block; }
 
 @media (max-width: 768px) {
   .mobile-only { display: flex !important; }
   .desktop-only { display: none !important; }
+  .hidden-mobile { display: none !important; }
+
   
   /* Sidebar Mobile Drawer */
   .sidebar {

@@ -102,7 +102,7 @@ export function PowerBudgetPanel({ nodeId, nodeName, onClose }: {
     const color = data ? powerColor(data.level as Level) : '#6b7280';
 
     return (
-        <div className="glass-morphism" style={{
+        <div className="glass-morphism hidden-mobile" style={{
             position: 'absolute', bottom: '20px', right: '16px', zIndex: 900,
             width: '320px', borderRadius: '16px', overflow: 'hidden',
             border: `1px solid ${color}44`,
