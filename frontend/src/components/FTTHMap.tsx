@@ -13,7 +13,6 @@ import FloatingStats from './map/FloatingStats';
 import { NodeInfoPanel, RouteInfoPanel } from './map/InfoPanels';
 import { AddNodeForm, CableForm } from './map/MapForms';
 import TerminationModal from './map/TerminationModal';
-import { PowerBudgetPanel } from './map/PowerBudgetPanel';
 
 // ── Snapping constant ──
 const SNAP_DISTANCE = 0.0003;
@@ -574,9 +573,6 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 />
             )}
 
-            {selectedNode && activeTool !== 'draw_cable' && ['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(selectedNode.node_type) && (
-                <PowerBudgetPanel nodeId={selectedNode.id} nodeName={selectedNode.name} onClose={() => setSelectedNode(null)} />
-            )}
 
             {selectedRoute && activeTool !== 'draw_cable' && (
                 <RouteInfoPanel 

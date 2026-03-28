@@ -1,7 +1,24 @@
-import React from 'react';
 import { Cable, Eye, Trash2, MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { apiFetch } from '../../utils/apiFetch';
 import type { NodeData, RouteData } from './types';
-import { NODE_CONFIG, ROUTE_CONFIG } from './types';
+import { NODE_CONFIG, ROUTE_CONFIG, API_BASE } from './types';
+
+// ── Power Helpers ──
+const powerColor = (level: string): string => {
+    if (level === 'excellent') return '#22c55e';
+    if (level === 'warning') return '#f59e0b';
+    if (level === 'critical') return '#ef4444';
+    return '#6b7280';
+};
+
+const levelLabel = (level: string) => {
+    const map: Record<string, string> = {
+        excellent: 'Excelente ✅', warning: 'Aceptable ⚠️', critical: 'Crítico 🔴',
+        loading: 'Calculando…', error: 'Error', unavailable: 'Sin ruta a OLT',
+    };
+    return map[level] || level;
+};
 
 // ── Node Info Panel ──
 interface NodeInfoPanelProps {
@@ -52,14 +69,7 @@ export const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({ node, onClose, onD
                 </span>
             </div>
 
-            {(node.node_type === 'MUFLA' || node.node_type === 'CAJA_NAP') && (
-                <div className="info-item">
-                    <span className="label">Potencia</span>
-                    <span className="value" style={{ color: (node.optical_power_dbm ?? 0) < -25 ? 'var(--error)' : 'var(--success)', fontWeight: 'bold' }}>
-                        {node.optical_power_dbm != null ? `${node.optical_power_dbm} dBm` : 'No medido'}
-                    </span>
-                </div>
-            )}
+            <NodePowerSection node={node} />
 
             <div className="info-panel-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
                 {childType && (
@@ -150,3 +160,57 @@ export const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ route, topOffset
         </div>
     );
 };
+
+const NodePowerSection: React.FC<{ node: NodeData }> = ({ node }) => {
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    
+    useEffect(() => {
+        if (!['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(node.node_type)) return;
+        setLoading(true);
+        apiFetch(`${API_BASE}/power-budget/${node.id}`)
+            .then(r => r.json())
+            .then(d => { setData(d); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, [node.id, node.node_type]);
+
+    if (!['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(node.node_type)) return null;
+
+    const color = data ? powerColor(data.level) : 'var(--text-muted)';
+
+    return (
+        <div style={{ marginTop: '16px', padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                Budget Óptico (Cálculo)
+            </div>
+            
+            {loading ? (
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Calculando...</div>
+            ) : data ? (
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800, color, letterSpacing: '-0.02em', lineHeight: 1 }}>
+                        {data.received_power_dbm.toFixed(2)}
+                        <span style={{ fontSize: '0.8rem', fontWeight: 400, marginLeft: '4px', opacity: 0.8 }}>dBm</span>
+                    </div>
+                    <div style={{ marginTop: '4px', fontSize: '0.75rem', color, fontWeight: 600 }}>
+                        {levelLabel(data.level)}
+                    </div>
+                    
+                    <div style={{ marginTop: '10px', display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        {['critical', 'warning', 'excellent'].map(l => (
+                            <div key={l} style={{
+                                width: '30%', height: '4px', borderRadius: '2px',
+                                background: data.level === l ? powerColor(l) : 'rgba(255,255,255,0.05)',
+                                boxShadow: data.level === l ? `0 0 10px ${powerColor(l)}` : 'none',
+                                transition: 'all 0.3s'
+                            }} />
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <div style={{ fontSize: '0.8rem', color: 'var(--error)' }}>No se pudo calcular la ruta</div>
+            )}
+        </div>
+    );
+};
+
