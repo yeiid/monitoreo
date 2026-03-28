@@ -93,11 +93,26 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             styleUrl = `${MAP_TILE_URL.replace(/\/$/, '')}/styles/basic/style.json`;
         }
 
+        // ── Recover viewport from localStorage for persistence ──
+        let initialCenter: [number, number] = [center[1], center[0]];
+        let initialZoom: number = zoom;
+
+        if (typeof window !== 'undefined') {
+            const savedViewport = localStorage.getItem('ftth_viewport');
+            if (savedViewport) {
+                try {
+                    const { lng, lat, zoom: sz } = JSON.parse(savedViewport);
+                    initialCenter = [lng, lat];
+                    initialZoom = sz;
+                } catch (e) { /* ignore */ }
+            }
+        }
+
         map.current = new maplibregl.Map({
             container: mapContainer.current,
             style: styleUrl,
-            center: [center[1], center[0]],
-            zoom: zoom,
+            center: initialCenter,
+            zoom: initialZoom,
             maxZoom: 22,
             transformRequest: (url, resourceType) => {
                 let transformedUrl = url;
@@ -117,6 +132,16 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         });
 
         const m = map.current;
+
+        // ── Persistence: Save view state on move ──
+        m.on('moveend', () => {
+            const c = m.getCenter();
+            localStorage.setItem('ftth_viewport', JSON.stringify({
+                lng: c.lng,
+                lat: c.lat,
+                zoom: m.getZoom()
+            }));
+        });
 
         m.on('load', () => {
             m.addSource('routes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -159,6 +184,26 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                     const routeId = e.features[0].properties?.id;
                     const r = routesRef.current.find(rt => rt.id === routeId);
                     if (r) setSelectedRoute(r);
+                }
+            });
+
+            // ── Interactivity: Hover effects for cables ──
+            m.on('mouseenter', 'routes-layer', () => {
+                if (activeToolRef.current === 'select') {
+                    m.getCanvas().style.cursor = 'pointer';
+                }
+            });
+
+            m.on('mouseleave', 'routes-layer', () => {
+                if (activeToolRef.current === 'select') {
+                    m.getCanvas().style.cursor = '';
+                }
+            });
+
+            m.on('mousemove', 'routes-layer', (e) => {
+                if (activeToolRef.current === 'select' && e.features?.[0]) {
+                    const feat = e.features[0];
+                    // You could add a hover popup here
                 }
             });
         });

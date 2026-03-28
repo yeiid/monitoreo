@@ -43,7 +43,10 @@ services:
     expose:
       - "8080"
     volumes:
+      # Use named volume for production (Dokploy)
       - map_data:/data
+      # For local testing, you can use a bind mount:
+      # - ./maps/colombia.mbtiles:/data/colombia.mbtiles:ro
     networks:
       - internal
 
@@ -56,8 +59,11 @@ services:
         PUBLIC_API_URL: /api/v1
         PUBLIC_MAP_TILE_URL: /styles/basic/style.json
     restart: unless-stopped
-    ports:
-      - "80:80"
+    expose:
+      - "80"
+    # ports:
+    #   - "80:80" # Comenta esto en Dokploy para evitar conflicto con el proxy, descomenta para local
+
     depends_on:
       - api
       - tileserver
