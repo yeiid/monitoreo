@@ -113,18 +113,15 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             center: initialCenter,
             zoom: initialZoom,
             maxZoom: 22,
-            transformRequest: (url, resourceType) => {
+            pitch: 45,
+            bearing: -17,
+            antialias: true,
+            transformRequest: (url) => {
                 let transformedUrl = url;
                 if (!transformedUrl.startsWith('http://localhost') &&
                     !transformedUrl.startsWith('http://127.0.0.1') &&
                     !transformedUrl.startsWith('http://192.168.')) {
                     transformedUrl = transformedUrl.replace('http://', 'https://');
-                }
-
-                if (resourceType === 'Glyphs' && transformedUrl.includes('/fonts/')) {
-                    return {
-                        url: transformedUrl.replace(/^.*?\/fonts\//, 'https://demotiles.maplibre.org/font/')
-                    };
                 }
                 return { url: transformedUrl };
             }

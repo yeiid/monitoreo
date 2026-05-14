@@ -127,9 +127,9 @@ if (RawAPI.startsWith('http') && !RawAPI.endsWith('/api/v1')) {
 
 export const API_BASE = RawAPI;
 
-// 2. TileServer configuration
+// 2. TileServer configuration (NeuralJira MaaS)
 export const MAP_TILE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_TILE_URL)
-    || (typeof window !== 'undefined' && (window.location.hostname.includes('neuraljira.tech') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '/tiles/' : 'http://localhost:8080/styles/basic/style.json');
+    || (typeof window !== 'undefined' && (window.location.hostname.includes('neuraljira.tech') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000/api/v1/style.json' : 'http://localhost:8000/api/v1/style.json');
 
 export const TILES_ATTRIBUTION = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_ATTRIBUTION)
     || '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';
