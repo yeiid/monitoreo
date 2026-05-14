@@ -76,7 +76,7 @@ export function PowerBadgeInline({ nodeId, nodeType }: { nodeId: string; nodeTyp
             border: `1px solid ${powerColor(level)}44`,
             borderRadius: '5px', padding: '2px 6px',
         }}>
-            ⚡ {power?.toFixed(1)} dBm
+            ⚡ {power !== null && power !== undefined ? power.toFixed(1) : '---'} dBm
         </span>
     );
 }
@@ -126,7 +126,7 @@ export function PowerBudgetPanel({ nodeId, nodeName, onClose }: {
                         {/* Main power reading */}
                         <div style={{ textAlign: 'center', padding: '16px 0' }}>
                             <div style={{ fontSize: '2.5rem', fontWeight: 900, color, letterSpacing: '-0.02em', lineHeight: 1 }}>
-                                {data.received_power_dbm.toFixed(2)}
+                                {data.received_power_dbm?.toFixed(2) || '0.00'}
                                 <span style={{ fontSize: '1rem', fontWeight: 400, marginLeft: '4px' }}>dBm</span>
                             </div>
                             <div style={{ marginTop: '6px', fontSize: '0.82rem', color }}>

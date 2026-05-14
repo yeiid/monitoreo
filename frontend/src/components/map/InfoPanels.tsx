@@ -166,12 +166,15 @@ const NodePowerSection: React.FC<{ node: NodeData }> = ({ node }) => {
     const [loading, setLoading] = useState(false);
     
     useEffect(() => {
-        if (!['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(node.node_type)) return;
+        if (!node.id || !['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(node.node_type)) return;
         setLoading(true);
         apiFetch(`${API_BASE}/power-budget/${node.id}`)
-            .then(r => r.json())
+            .then(async r => {
+                if (!r.ok) throw new Error('Budget not found');
+                return r.json();
+            })
             .then(d => { setData(d); setLoading(false); })
-            .catch(() => setLoading(false));
+            .catch(() => { setData(null); setLoading(false); });
     }, [node.id, node.node_type]);
 
     if (!['MUFLA', 'CAJA_NAP', 'CLIENTE_ONU'].includes(node.node_type)) return null;
@@ -189,11 +192,11 @@ const NodePowerSection: React.FC<{ node: NodeData }> = ({ node }) => {
             ) : data ? (
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '1.8rem', fontWeight: 800, color, letterSpacing: '-0.02em', lineHeight: 1 }}>
-                        {data.received_power_dbm.toFixed(2)}
+                        {data.received_power_dbm?.toFixed(2) || '0.00'}
                         <span style={{ fontSize: '0.8rem', fontWeight: 400, marginLeft: '4px', opacity: 0.8 }}>dBm</span>
                     </div>
                     <div style={{ marginTop: '4px', fontSize: '0.75rem', color, fontWeight: 600 }}>
-                        {levelLabel(data.level)}
+                        {levelLabel(data.level || 'unavailable')}
                     </div>
                     
                     <div style={{ marginTop: '10px', display: 'flex', gap: '4px', justifyContent: 'center' }}>

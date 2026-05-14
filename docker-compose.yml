@@ -40,13 +40,15 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile
       args:
-        PUBLIC_API_URL: https://neuraljira.tech/api/v1
-        PUBLIC_MAP_TILE_URL: https://neuraljira.tech/map-api/api/v1/style.json
+        PUBLIC_API_URL: /api/v1
+        PUBLIC_MAP_TILE_URL: /map-api/api/v1/style.json
     restart: unless-stopped
     expose:
       - "80"
     ports:
       - "8081:80"
+    extra_hosts:
+      - "map-manager-1:host-gateway" # Permite conectar con el otro proyecto docker
     depends_on:
       - api
     networks:

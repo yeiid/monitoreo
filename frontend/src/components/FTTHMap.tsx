@@ -1,23 +1,26 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { apiFetch } from '../utils/apiFetch';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { NodeData, RouteData, DrawingTool } from './map/types';
-import { NODE_CONFIG, ROUTE_CONFIG, API_BASE, MAP_TILE_URL } from './map/types';
-import { createNodeElement, toMapLibreCoord, CABLE_LAYER_STYLE } from './map/maplibreUtils';
+import { API_BASE } from './map/types';
 import MapToolbar from './map/MapToolbar';
-import MobileToolbar from './mobile/MobileToolbar';
-import MobileHUD from './mobile/MobileHUD';
 import FloatingStats from './map/FloatingStats';
 import { NodeInfoPanel, RouteInfoPanel } from './map/InfoPanels';
 import { AddNodeForm, CableForm } from './map/MapForms';
 import TerminationModal from './map/TerminationModal';
 
-// ── Snapping constant ──
+// Hooks
+import { useFTTHData } from './map/hooks/useFTTHData';
+import { useMapInstance } from './map/hooks/useMapInstance';
+import { useMapLayers } from './map/hooks/useMapLayers';
+import { useMapMarkers } from './map/hooks/useMapMarkers';
+import { useMapInteraction } from './map/hooks/useMapInteraction';
+import { useDrawingTools } from './map/hooks/useDrawingTools';
+import { useMapActions } from './map/hooks/useMapActions';
+
 const SNAP_DISTANCE = 0.0003;
 
-// ── Main Component ──
 interface FTTHMapProps {
     center: [number, number];
     zoom: number;
@@ -26,369 +29,53 @@ interface FTTHMapProps {
 }
 
 const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOpenLocationSelector }) => {
-    const mapContainer = useRef<HTMLDivElement>(null);
-    const map = useRef<maplibregl.Map | null>(null);
-    const markers = useRef<Record<string, maplibregl.Marker>>({});
+    // 1. Data Hook
+    const { nodes, setNodes, routes, setRoutes, deleteNode, deleteRoute } = useFTTHData();
+    const nodesRef = useRef<NodeData[]>(nodes);
+    const routesRef = useRef<RouteData[]>(routes);
+    useEffect(() => { nodesRef.current = nodes; }, [nodes]);
+    useEffect(() => { routesRef.current = routes; }, [routes]);
 
-    // ── State ──
-    const [nodes, setNodes] = useState<NodeData[]>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('ftth_nodes');
-            return saved ? JSON.parse(saved) : [];
-        }
-        return [];
-    });
-    const [routes, setRoutes] = useState<RouteData[]>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('ftth_routes');
-            return saved ? JSON.parse(saved) : [];
-        }
-        return [];
-    });
-    const [activeTool, setActiveTool] = useState<DrawingTool>('select');
-    const [selectedNode, setSelectedNode] = useState<NodeData|null>(null);
+    // 2. Map Instance Hook
+    const { mapContainer, map, flyToNode, flyToRoute } = useMapInstance({ center, zoom });
+
+    // 3. Drawing Tools Hook
+    const dt = useDrawingTools();
+
+    // 4. Map Actions Hook (API)
+    const { saveNode, saveCable, saveContinuousTrace } = useMapActions({ setNodes, setRoutes });
+
+    // 5. Local UI State
+    const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);
     const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
-
-    // Forms & Modals
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [pendingLocation, setPendingLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [pendingNodeType, setPendingNodeType] = useState('');
     const [formName, setFormName] = useState('');
     const [formDescription, setFormDescription] = useState('');
     const [formPower, setFormPower] = useState<number | undefined>(undefined);
-
-    const [cablePoints, setCablePoints] = useState<[number, number][]>([]);
-    const [isDrawingCable, setIsDrawingCable] = useState(false);
     const [cableName, setCableName] = useState('');
     const [cableType, setCableType] = useState('TRONCAL');
     const [cableCapacity, setCableCapacity] = useState(12);
-    const [showCableForm, setShowCableForm] = useState(false);
-    const [showTerminationModal, setShowTerminationModal] = useState(false);
     const [clientForm, setClientForm] = useState({ name: '', address: '', contract: '' });
     const [isSaving, setIsSaving] = useState(false);
 
-    // ── Refs for Event Listeners (Preventing Stale Closures) ──
-    const activeToolRef = useRef<DrawingTool>(activeTool);
-    const nodesRef = useRef<NodeData[]>(nodes);
-    const routesRef = useRef<RouteData[]>(routes);
-    const cablePointsRef = useRef<[number, number][]>(cablePoints);
+    // 6. Map Layers Hook
+    useMapLayers(map, routes, dt.cablePoints);
 
-    useEffect(() => { activeToolRef.current = activeTool; }, [activeTool]);
-    useEffect(() => { nodesRef.current = nodes; }, [nodes]);
-    useEffect(() => { routesRef.current = routes; }, [routes]);
-    useEffect(() => { cablePointsRef.current = cablePoints; }, [cablePoints]);
-
-    // ── Persistent markers storage for long-press ──
-    const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // ── Initialize Map ──
-    useEffect(() => {
-        if (map.current || !mapContainer.current) return;
-
-        let styleUrl = '';
-        if (MAP_TILE_URL.endsWith('.json')) {
-            styleUrl = MAP_TILE_URL;
-        } else {
-            styleUrl = `${MAP_TILE_URL.replace(/\/$/, '')}/styles/basic/style.json`;
-        }
-
-        // ── Recover viewport from localStorage for persistence ──
-        let initialCenter: [number, number] = [center[1], center[0]];
-        let initialZoom: number = zoom;
-
-        if (typeof window !== 'undefined') {
-            const savedViewport = localStorage.getItem('ftth_viewport');
-            if (savedViewport) {
-                try {
-                    const { lng, lat, zoom: sz } = JSON.parse(savedViewport);
-                    initialCenter = [lng, lat];
-                    initialZoom = sz;
-                } catch (e) { /* ignore */ }
-            }
-        }
-
-        map.current = new maplibregl.Map({
-            container: mapContainer.current,
-            style: styleUrl,
-            center: initialCenter,
-            zoom: initialZoom,
-            maxZoom: 22,
-            pitch: 45,
-            bearing: -17,
-            antialias: true,
-            transformRequest: (url) => {
-                let transformedUrl = url;
-                if (!transformedUrl.startsWith('http://localhost') &&
-                    !transformedUrl.startsWith('http://127.0.0.1') &&
-                    !transformedUrl.startsWith('http://192.168.')) {
-                    transformedUrl = transformedUrl.replace('http://', 'https://');
-                }
-                return { url: transformedUrl };
-            }
-        });
-
-        const m = map.current;
-
-        // ── Persistence: Save view state on move ──
-        m.on('moveend', () => {
-            const c = m.getCenter();
-            localStorage.setItem('ftth_viewport', JSON.stringify({
-                lng: c.lng,
-                lat: c.lat,
-                zoom: m.getZoom()
-            }));
-        });
-
-        m.on('load', () => {
-            m.addSource('routes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-            m.addSource('pending-cable', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-
-            m.addLayer({
-                id: 'routes-layer',
-                type: 'line',
-                source: 'routes',
-                paint: {
-                    'line-color': ['get', 'color'],
-                    'line-width': ['get', 'weight'],
-                    'line-opacity': ['get', 'opacity'],
-                }
-            });
-
-            m.addLayer({
-                id: 'pending-cable-layer',
-                type: 'line',
-                source: 'pending-cable',
-                paint: {
-                    'line-color': '#facc15',
-                    'line-width': 3,
-                    'line-dasharray': [2, 2],
-                    'line-opacity': 0.8
-                }
-            });
-
-            // Pulsing animation for pending cable
-            let opacityStep = 0;
-            const animateCable = () => {
-                if (!m) return;
-                opacityStep = (opacityStep + 0.08) % (Math.PI * 2);
-                const opacity = 0.4 + Math.abs(Math.sin(opacityStep)) * 0.6;
-                if (m.getLayer('pending-cable-layer')) {
-                    m.setPaintProperty('pending-cable-layer', 'line-opacity', opacity);
-                }
-                requestAnimationFrame(animateCable);
-            };
-            animateCable();
-
-
-            m.on('click', (e) => {
-                const { lng, lat } = e.lngLat;
-                const tool = activeToolRef.current;
-                if (['add_olt', 'add_mufla', 'add_nap', 'add_client'].includes(tool)) {
-                    handleMapClick(lat, lng);
-                } else if (tool === 'draw_cable') {
-                    handleCablePoint(lat, lng);
-                }
-            });
-
-            m.on('click', 'routes-layer', (e) => {
-                if (activeToolRef.current === 'select' && e.features?.[0]) {
-                    const routeId = e.features[0].properties?.id;
-                    const r = routesRef.current.find(rt => rt.id === routeId);
-                    if (r) setSelectedRoute(r);
-                }
-            });
-
-            // ── Interactivity: Hover effects for cables ──
-            m.on('mouseenter', 'routes-layer', () => {
-                if (activeToolRef.current === 'select') {
-                    m.getCanvas().style.cursor = 'pointer';
-                }
-            });
-
-            m.on('mouseleave', 'routes-layer', () => {
-                if (activeToolRef.current === 'select') {
-                    m.getCanvas().style.cursor = '';
-                }
-            });
-
-            m.on('mousemove', 'routes-layer', (e) => {
-                if (activeToolRef.current === 'select' && e.features?.[0]) {
-                    const feat = e.features[0];
-                    // You could add a hover popup here
-                }
-            });
-        });
-
-        return () => m.remove();
-    }, []);
-
-    const routeGeoJSON = React.useMemo(() => ({
-        type: 'FeatureCollection' as const,
-        features: routes.map(r => {
-            const cfg = ROUTE_CONFIG[r.route_type] || ROUTE_CONFIG.TRONCAL;
-            return {
-                type: 'Feature' as const,
-                geometry: {
-                    type: 'LineString' as const,
-                    coordinates: (() => {
-                        const path = r.path as any;
-                        if (path.coordinates) return path.coordinates;
-                        if (Array.isArray(path)) return path;
-                        return [];
-                    })() as [number, number][]
-                },
-                properties: {
-                    id: r.id,
-                    color: cfg.color,
-                    weight: cfg.weight,
-                    opacity: cfg.opacity
-                }
-            };
-        })
-    }), [routes]);
-
-    useEffect(() => {
-        if (!map.current) return;
-        const source = map.current.getSource('routes') as maplibregl.GeoJSONSource;
-        if (source) source.setData(routeGeoJSON);
-    }, [routeGeoJSON]);
-
-    useEffect(() => {
-        if (!map.current) return;
-        const m = map.current;
-
-        nodes.forEach(node => {
-            if (!markers.current[node.id]) {
-                const el = createNodeElement(node.node_type, node.status as any);
-                const marker = new maplibregl.Marker({ element: el })
-                    .setLngLat([node.location.lng, node.location.lat])
-                    .addTo(m);
-
-                el.addEventListener('mousedown', () => handleNodePressStart(node));
-                el.addEventListener('mouseup', handleNodePressEnd);
-                el.addEventListener('mouseleave', handleNodePressEnd);
-                el.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const tool = activeToolRef.current;
-                    if (tool === 'draw_cable') {
-                        handleCablePoint(node.location.lat, node.location.lng);
-                    } else if (tool === 'select') {
-                        setSelectedNode(node);
-                    }
-                });
-                el.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    if (node.node_type !== 'CLIENTE_ONU' && activeToolRef.current === 'select') {
-                        setActiveTool('draw_cable');
-                        setCablePoints([[node.location.lng, node.location.lat]]);
-                        setIsDrawingCable(true);
-                    }
-                });
-                markers.current[node.id] = marker;
-            } else {
-                markers.current[node.id].setLngLat([node.location.lng, node.location.lat]);
-            }
-        });
-
-        Object.keys(markers.current).forEach(id => {
-            if (!nodes.find(n => n.id === id)) {
-                markers.current[id].remove();
-                delete markers.current[id];
-            }
-        });
-    }, [nodes]);
-
-    useEffect(() => {
-        if (!map.current) return;
-        const source = map.current.getSource('pending-cable') as maplibregl.GeoJSONSource;
-        if (source) {
-            source.setData({
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: cablePoints },
-                properties: {}
-            });
-        }
-    }, [cablePoints]);
-
-    const fetchNodes = useCallback(async () => {
-        try {
-            const res = await apiFetch(`${API_BASE}/nodes`);
-            if (res.ok) {
-                const data = await res.json();
-                setNodes(data);
-                localStorage.setItem('ftth_nodes', JSON.stringify(data));
-            }
-        } catch (err) { console.error(`[Nodes] Failed: ${err}`); }
-    }, []);
-
-    const fetchRoutes = useCallback(async () => {
-        try {
-            const res = await apiFetch(`${API_BASE}/routes`);
-            if (res.ok) {
-                const data = await res.json();
-                setRoutes(data);
-                localStorage.setItem('ftth_routes', JSON.stringify(data));
-            }
-        } catch (err) { console.error(`[Routes] Failed: ${err}`); }
-    }, []);
-
-    useEffect(() => { fetchNodes(); fetchRoutes(); }, [fetchNodes, fetchRoutes]);
-
+    // ── Interaction Logic ──
     const handleMapClick = (lat: number, lng: number) => {
         const toolToNodeType: Record<string, string> = {
             add_olt: 'OLT', add_mufla: 'MUFLA', add_nap: 'CAJA_NAP', add_client: 'CLIENTE_ONU',
         };
-        const nodeType = toolToNodeType[activeToolRef.current];
+        const nodeType = toolToNodeType[dt.activeToolRef.current];
         if (!nodeType) return;
-        setPendingLocation({ lat, lng });
-        setPendingNodeType(nodeType);
+        dt.setPendingLocation({ lat, lng });
+        dt.setPendingNodeType(nodeType);
         setFormName(''); setFormDescription(''); setFormPower(undefined);
-        setShowAddForm(true);
-    };
-
-    const handleSaveNode = async () => {
-        if (!pendingLocation || !formName) return;
-        const payload = {
-            name: formName, node_type: pendingNodeType,
-            description: formDescription,
-            optical_power_dbm: ['MUFLA', 'CAJA_NAP'].includes(pendingNodeType) ? formPower : undefined,
-            location: pendingLocation,
-        };
-        try {
-            const res = await apiFetch(`${API_BASE}/nodes`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setNodes(prev => [...prev, data]);
-            }
-        } catch (e) {
-            console.error("Save node failed", e);
-        }
-        setShowAddForm(false); setPendingLocation(null); setActiveTool('select');
-    };
-
-    const handleNodePressStart = (node: NodeData) => {
-        if (node.node_type === 'CLIENTE_ONU' || activeTool !== 'select') return;
-        pressTimer.current = setTimeout(() => {
-            setActiveTool('draw_cable');
-            setCablePoints([[node.location.lng, node.location.lat]]);
-            setIsDrawingCable(true);
-            if (window.navigator?.vibrate) window.navigator.vibrate(50);
-        }, 500);
-    };
-
-    const handleNodePressEnd = () => {
-        if (pressTimer.current) {
-            clearTimeout(pressTimer.current);
-            pressTimer.current = null;
-        }
+        dt.setShowAddForm(true);
     };
 
     const handleCablePoint = (lat: number, lng: number) => {
         const currentNodes = nodesRef.current;
-        const currentCablePoints = cablePointsRef.current;
+        const currentCablePoints = dt.cablePointsRef.current;
         const nearest = currentNodes.find(n => {
             const d = Math.sqrt(Math.pow(n.location.lat - lat, 2) + Math.pow(n.location.lng - lng, 2));
             return d < SNAP_DISTANCE;
@@ -397,75 +84,90 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         if (currentCablePoints.length === 0) {
             if (!nearest || nearest.node_type === 'CLIENTE_ONU') return;
         }
-        setCablePoints(prev => [...prev, point]);
-        setIsDrawingCable(true);
+        dt.setCablePoints(prev => [...prev, point]);
+        dt.setIsDrawingCable(true);
     };
 
-    const finishCable = () => {
-        if (cablePoints.length < 2) return;
-        const [lastLng, lastLat] = cablePoints[cablePoints.length - 1];
-        const endNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lastLat, 2) + Math.pow(n.location.lng - lastLng, 2)) < 0.0001);
-        if (endNode) {
-            setCableCapacity(endNode.node_type === 'CLIENTE_ONU' ? 4 : 16);
-            setShowCableForm(true);
-        } else {
-            setShowTerminationModal(true);
+    // 7. Interaction Hook
+    useMapInteraction({
+        map,
+        activeToolRef: dt.activeToolRef,
+        routesRef,
+        handleMapClick,
+        handleCablePoint,
+        setSelectedRoute
+    });
+
+    // 8. Markers Hook
+    const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useMapMarkers({
+        map,
+        nodes,
+        activeToolRef: dt.activeToolRef,
+        onNodeClick: (node) => {
+            if (dt.activeToolRef.current === 'draw_cable') {
+                handleCablePoint(node.location.lat, node.location.lng);
+            } else if (dt.activeToolRef.current === 'select') {
+                setSelectedNode(node);
+            }
+        },
+        onNodeDoubleClick: (node) => {
+            if (node.node_type !== 'CLIENTE_ONU' && dt.activeToolRef.current === 'select') {
+                dt.startCableAt(node.location.lng, node.location.lat);
+            }
+        },
+        onNodePressStart: (node) => {
+            if (node.node_type === 'CLIENTE_ONU' || dt.activeTool !== 'select') return;
+            pressTimer.current = setTimeout(() => {
+                dt.startCableAt(node.location.lng, node.location.lat);
+                if (window.navigator?.vibrate) window.navigator.vibrate(50);
+            }, 500);
+        },
+        onNodePressEnd: () => {
+            if (pressTimer.current) {
+                clearTimeout(pressTimer.current);
+                pressTimer.current = null;
+            }
         }
+    });
+
+    // ── UI Actions ──
+    const handleSaveNodeAction = async () => {
+        if (!dt.pendingLocation || !formName) return;
+        const payload = {
+            name: formName, node_type: dt.pendingNodeType,
+            description: formDescription,
+            optical_power_dbm: ['MUFLA', 'CAJA_NAP'].includes(dt.pendingNodeType) ? formPower : undefined,
+            location: dt.pendingLocation,
+        };
+        await saveNode(payload);
+        dt.setShowAddForm(false); dt.setPendingLocation(null); dt.setActiveTool('select');
     };
 
-    const cancelCable = () => { setCablePoints([]); setIsDrawingCable(false); setShowCableForm(false); setActiveTool('select'); };
-
-    const handleSaveCable = async () => {
-        if (cablePoints.length < 2 || !cableName) return;
-        const [sLng, sLat] = cablePoints[0];
-        const [eLng, eLat] = cablePoints[cablePoints.length - 1];
+    const handleSaveCableAction = async () => {
+        if (dt.cablePoints.length < 2 || !cableName) return;
+        const [sLng, sLat] = dt.cablePoints[0];
+        const [eLng, eLat] = dt.cablePoints[dt.cablePoints.length - 1];
         const findNode = (lat: number, lng: number) => nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lat, 2) + Math.pow(n.location.lng - lng, 2)) < 0.0001);
         const startNode = findNode(sLat, sLng);
         const endNode = findNode(eLat, eLng);
         const payload = {
             name: cableName, route_type: cableType, capacity: cableCapacity,
             start_node_id: startNode?.id, end_node_id: endNode?.id,
-            path: { coordinates: cablePoints },
+            path: { coordinates: dt.cablePoints },
         };
-        try {
-            const res = await apiFetch(`${API_BASE}/routes`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setRoutes(prev => [...prev, data]);
-            }
-        } catch (e) { }
-        cancelCable();
+        await saveCable(payload);
+        dt.resetDrawing();
     };
 
-    const handleDeleteNode = async (nodeId: string) => {
-        try { 
-            await apiFetch(`${API_BASE}/nodes/${nodeId}`, { method: 'DELETE' }); 
-            setNodes(prev => prev.filter(n => n.id !== nodeId));
-            // Frontend Cascade: Filter out routes connected to this node
-            setRoutes(prev => prev.filter(r => r.start_node_id !== nodeId && r.end_node_id !== nodeId));
-            setSelectedNode(null);
-        } catch { 
-            alert("No se pudo eliminar el nodo.");
-        }
-    };
-
-    const handleDeleteRoute = async (routeId: string) => {
-        try { await apiFetch(`${API_BASE}/routes/${routeId}`, { method: 'DELETE' }); } catch { }
-        setRoutes(prev => prev.filter(r => r.id !== routeId));
-        setSelectedRoute(null);
-    };
-
-    const handleSaveContinuousTrace = async (targetType: string) => {
-        if (cablePoints.length < 2) return;
-        const [sLng, sLat] = cablePoints[0];
+    const handleSaveContinuousTraceAction = async (targetType: string) => {
+        if (dt.cablePoints.length < 2) return;
+        const [sLng, sLat] = dt.cablePoints[0];
         const startNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - sLat, 2) + Math.pow(n.location.lng - sLng, 2)) < 0.0001);
         if (!startNode) return;
         const nodeName = targetType === 'CLIENTE_ONU' ? clientForm.name : `${targetType} ${nodes.length + 1}`;
         const payload = {
-            path: { coordinates: cablePoints },
+            path: { coordinates: dt.cablePoints },
             start_node_id: startNode.id,
             node_data: { name: nodeName, node_type: targetType, description: clientForm.address },
             route_data: { 
@@ -475,135 +177,94 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             },
         };
         setIsSaving(true);
-        try {
-            const res = await apiFetch(`${API_BASE}/continuous-trace`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setNodes(prev => [...prev, data.node]);
-                setRoutes(prev => [...prev, data.route]);
-            }
-        } catch (e) { } finally {
-            setIsSaving(false); cancelCable(); setShowTerminationModal(false);
+        await saveContinuousTrace(payload);
+        setIsSaving(false); dt.resetDrawing(); dt.setShowTerminationModal(false);
+    };
+
+    const finishCable = () => {
+        if (dt.cablePoints.length < 2) return;
+        const [lastLng, lastLat] = dt.cablePoints[dt.cablePoints.length - 1];
+        const endNode = nodes.find(n => Math.sqrt(Math.pow(n.location.lat - lastLat, 2) + Math.pow(n.location.lng - lastLng, 2)) < 0.0001);
+        if (endNode) {
+            setCableCapacity(endNode.node_type === 'CLIENTE_ONU' ? 4 : 16);
+            dt.setShowCableForm(true);
+        } else {
+            dt.setShowTerminationModal(true);
         }
     };
 
-    const handleAddChild = (parent: NodeData, childType: string) => {
-        setActiveTool('draw_cable');
-        setCablePoints([[parent.location.lng, parent.location.lat]]);
-        setIsDrawingCable(true);
-        setSelectedNode(null);
-    };
-    // ── Map Navigation Helpers ──
-    const handleCenterOnNode = useCallback((n: NodeData) => {
-        if (!map.current) return;
-        map.current.flyTo({
-            center: [n.location.lng, n.location.lat],
-            zoom: 18,
-            speed: 1.5,
-            curve: 1
-        });
-    }, []);
-
-    const handleCenterOnRoute = useCallback((r: RouteData) => {
-        if (!map.current || !r.path.coordinates.length) return;
-        // Simple center on first point for now, or calculate bounds
-        const [lng, lat] = r.path.coordinates[0];
-        map.current.flyTo({
-            center: [lng, lat],
-            zoom: 16,
-            speed: 1.2
-        });
-    }, []);
-
-    // Effect to handle navigation from other pages (via localStorage)
+    // Effects for navigation from other pages
     useEffect(() => {
         const pending = localStorage.getItem('ftth_center_on_node');
         if (pending && map.current) {
             const data = JSON.parse(pending);
-            map.current.flyTo({
-                center: [data.lng, data.lat],
-                zoom: 18
-            });
+            map.current.flyTo({ center: [data.lng, data.lat], zoom: 18 });
             localStorage.removeItem('ftth_center_on_node');
-            // Optionally auto-select it
             const node = nodes.find(n => n.id === data.id);
             if (node) setSelectedNode(node);
         }
-    }, [nodes]);
+    }, [nodes, map]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            {/* 1. Map container FIRST (baseline) */}
-            <div
-                ref={mapContainer}
-                className="map-container"
-                style={{ width: '100%', height: '100%', background: '#1a1a1a', zIndex: 1 }}
-            />
+            <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100%', background: '#1a1a1a', zIndex: 1 }} />
 
             <MapToolbar
-                activeTool={activeTool}
-                setActiveTool={(t) => { setActiveTool(t); setSelectedNode(null); setSelectedRoute(null); if (t === 'draw_cable') setCablePoints([]); }}
+                activeTool={dt.activeTool}
+                setActiveTool={(t) => { dt.setActiveTool(t); setSelectedNode(null); setSelectedRoute(null); if (t === 'draw_cable') dt.setCablePoints([]); }}
                 hasOLT={nodes.some(n => n.node_type === 'OLT')}
-                isDrawingCable={isDrawingCable}
-                cablePointCount={cablePoints.length}
+                isDrawingCable={dt.isDrawingCable}
+                cablePointCount={dt.cablePoints.length}
                 onFinishCable={finishCable}
-                onCancelCable={cancelCable}
+                onCancelCable={dt.resetDrawing}
                 onOpenLocationSelector={onOpenLocationSelector}
             />
 
             <FloatingStats nodes={nodes} routes={routes} />
 
-            {selectedNode && activeTool !== 'draw_cable' && (
+            {selectedNode && dt.activeTool !== 'draw_cable' && (
                 <NodeInfoPanel
                     node={selectedNode}
                     onClose={() => setSelectedNode(null)}
-                    onDelete={handleDeleteNode}
-                    onCenter={handleCenterOnNode}
-                    onInspect={(n) => {
-                        onNodeDoubleClick?.(n);
-                        setSelectedNode(null); // Clear local selection to show modal cleanly
-                    }}
-                    onAddChild={handleAddChild}
+                    onDelete={async (id) => { if (await deleteNode(id)) setSelectedNode(null); }}
+                    onCenter={(n) => flyToNode(n.location.lng, n.location.lat)}
+                    onInspect={(n) => { onNodeDoubleClick?.(n); setSelectedNode(null); }}
+                    onAddChild={(parent) => dt.startCableAt(parent.location.lng, parent.location.lat)}
                 />
             )}
 
-
-            {selectedRoute && activeTool !== 'draw_cable' && (
+            {selectedRoute && dt.activeTool !== 'draw_cable' && (
                 <RouteInfoPanel 
                     route={selectedRoute} 
                     topOffset={selectedNode ? '490px' : '16px'} 
                     onClose={() => setSelectedRoute(null)} 
-                    onDelete={handleDeleteRoute} 
-                    onCenter={handleCenterOnRoute}
+                    onDelete={async (id) => { if (await deleteRoute(id)) setSelectedRoute(null); }} 
+                    onCenter={(r) => r.path.coordinates[0] && flyToRoute(r.path.coordinates[0][0], r.path.coordinates[0][1])}
                 />
             )}
 
-            {showTerminationModal && (
+            {dt.showTerminationModal && (
                 <TerminationModal
-                    startType={nodes.find(n => Math.sqrt(Math.pow(n.location.lat - cablePoints[0][1], 2) + Math.pow(n.location.lng - cablePoints[0][0], 2)) < 0.0001)?.node_type}
-                    clientForm={clientForm}
-                    setClientForm={setClientForm}
-                    onSelectTarget={handleSaveContinuousTrace}
-                    onCancel={() => { setShowTerminationModal(false); cancelCable(); }}
+                    startType={nodes.find(n => Math.sqrt(Math.pow(n.location.lat - dt.cablePoints[0][1], 2) + Math.pow(n.location.lng - dt.cablePoints[0][0], 2)) < 0.0001)?.node_type}
+                    clientForm={clientForm} setClientForm={setClientForm}
+                    onSelectTarget={handleSaveContinuousTraceAction}
+                    onCancel={() => { dt.setShowTerminationModal(false); dt.resetDrawing(); }}
                 />
             )}
 
-            {showAddForm && (
+            {dt.showAddForm && (
                 <AddNodeForm
-                    pendingNodeType={pendingNodeType} pendingLocation={pendingLocation!}
+                    pendingNodeType={dt.pendingNodeType} pendingLocation={dt.pendingLocation!}
                     formName={formName} setFormName={setFormName} formDescription={formDescription} setFormDescription={setFormDescription}
-                    formPower={formPower} setFormPower={setFormPower} onSave={handleSaveNode} onCancel={() => { setShowAddForm(false); setActiveTool('select'); }}
+                    formPower={formPower} setFormPower={setFormPower} onSave={handleSaveNodeAction} onCancel={() => { dt.setShowAddForm(false); dt.setActiveTool('select'); }}
                 />
             )}
 
-            {showCableForm && (
+            {dt.showCableForm && (
                 <CableForm
                     cableName={cableName} setCableName={setCableName} cableType={cableType} setCableType={setCableType}
-                    cableCapacity={cableCapacity} setCableCapacity={setCableCapacity} cablePointCount={cablePoints.length}
-                    onSave={handleSaveCable} onCancel={cancelCable}
+                    cableCapacity={cableCapacity} setCableCapacity={setCableCapacity} cablePointCount={dt.cablePoints.length}
+                    onSave={handleSaveCableAction} onCancel={dt.resetDrawing}
                 />
             )}
         </div>
