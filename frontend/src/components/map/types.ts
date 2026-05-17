@@ -128,7 +128,20 @@ if (RawAPI.startsWith('http') && !RawAPI.endsWith('/api/v1')) {
 export const API_BASE = RawAPI;
 
 // 2. TileServer configuration (NeuralJira MaaS - Unified Proxy)
-export const MAP_TILE_URL = '/map-api/api/v1/style.json';
+const getMapTileUrl = () => {
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname.includes('neuraljira.tech')) {
+            return 'https://map.neuraljira.tech/api/v1/style.json';
+        }
+    }
+    if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_TILE_URL) {
+        return import.meta.env.PUBLIC_MAP_TILE_URL;
+    }
+    return '/map-api/api/v1/style.json';
+};
+
+export const MAP_TILE_URL = getMapTileUrl();
 
 export const TILES_ATTRIBUTION = (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_MAP_ATTRIBUTION)
     || '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>';
