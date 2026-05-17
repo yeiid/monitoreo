@@ -55,7 +55,7 @@ const DiagramadorEmpalmes: React.FC<DiagramadorEmpalmesProps> = ({ node, onClose
       if (!node) return;
       setLoading(true);
       try {
-        console.log("Fetching diagram data for node:", node.id);
+
         const [routesRes, splicesRes] = await Promise.all([
           apiFetch(`${API_BASE}/routes/?node_id=${node.id}`),
           apiFetch(`${API_BASE}/nodes/${node.id}/splices`)
