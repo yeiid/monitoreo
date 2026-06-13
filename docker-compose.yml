@@ -7,6 +7,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-monitoreo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monitoreo123}
       POSTGRES_DB: ${POSTGRES_DB:-monitoreodb}
+    ports:
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:

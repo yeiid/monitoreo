@@ -1,15 +1,39 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg fill="#000000" height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 viewBox="0 0 512 512" xml:space="preserve">
-<g>
-	<g>
-		<path d="M503.467,110.933l-85.333-64c-3.691-2.773-8.171-4.267-12.8-4.267h-128V21.333C277.333,9.557,267.797,0,256,0
-			s-21.333,9.557-21.333,21.333v21.333h-128c-11.797,0-21.333,9.557-21.333,21.333v128c0,11.776,9.536,21.333,21.333,21.333h128
-			v21.333h-128c-4.629,0-9.109,1.493-12.8,4.267l-85.333,64C3.157,306.965,0,313.28,0,320s3.157,13.035,8.533,17.067l85.333,64
-			c3.691,2.773,8.171,4.267,12.8,4.267h128v85.333c0,11.776,9.536,21.333,21.333,21.333s21.333-9.557,21.333-21.333v-85.333h128
-			c11.797,0,21.333-9.557,21.333-21.333V256c0-11.776-9.536-21.333-21.333-21.333h-128v-21.333h128c4.629,0,9.109-1.493,12.8-4.267
-			l85.333-64C508.843,141.035,512,134.72,512,128C512,121.28,508.843,114.965,503.467,110.933z"/>
-	</g>
-</g>
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cable entries/glands (left & right sides) -->
+  <rect x="2" y="28" width="8" height="8" rx="1" fill="#334155" stroke="#1e293b"/>
+  <rect x="54" y="28" width="8" height="8" rx="1" fill="#334155" stroke="#1e293b"/>
+
+  <!-- Entering thick black fiber cables -->
+  <path d="M0 32 L 6 32" stroke="#0f172a" stroke-width="4"/>
+  <path d="M58 32 L 64 32" stroke="#0f172a" stroke-width="4"/>
+
+  <!-- Mufla Cylindrical Body -->
+  <rect x="8" y="16" width="48" height="32" rx="6" fill="url(#mufla-body)" stroke="#0f172a" stroke-width="2"/>
+
+  <!-- Ribbed rings/reinforcements for rugged structure -->
+  <rect x="14" y="16" width="3" height="32" fill="#0f172a" opacity="0.3"/>
+  <rect x="22" y="16" width="3" height="32" fill="#0f172a" opacity="0.3"/>
+  <rect x="30" y="16" width="4" height="32" fill="#475569" stroke="#334155" stroke-width="0.5"/> <!-- Center clamp -->
+  <rect x="39" y="16" width="3" height="32" fill="#0f172a" opacity="0.3"/>
+  <rect x="47" y="16" width="3" height="32" fill="#0f172a" opacity="0.3"/>
+
+  <!-- Mounting bracket on top -->
+  <path d="M20 16 C 20 10, 44 10, 44 16" stroke="#64748b" stroke-width="2.5" fill="none"/>
+  
+  <!-- Screws / details on Center clamp -->
+  <circle cx="32" cy="22" r="1.5" fill="#94a3b8"/>
+  <circle cx="32" cy="42" r="1.5" fill="#94a3b8"/>
+
+  <!-- Warning sticker / label -->
+  <rect x="12" y="32" width="6" height="4" rx="0.5" fill="#facc15"/>
+  <path d="M15 33 L 13.5 35.5 L 16.5 35.5 Z" fill="#000000"/>
+
+  <defs>
+    <linearGradient id="mufla-body" x1="32" y1="16" x2="32" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="25%" stop-color="#1e293b"/>
+      <stop offset="75%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
 </svg>

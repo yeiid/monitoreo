@@ -31,7 +31,11 @@ export const useMapMarkers = ({
         nodes.forEach(node => {
             if (!markers.current[node.id]) {
                 const el = createNodeElement(node.node_type, node.status as any);
-                const marker = new maplibregl.Marker({ element: el })
+                const marker = new maplibregl.Marker({
+                    element: el,
+                    pitchAlignment: 'map',
+                    rotationAlignment: 'viewport'
+                })
                     .setLngLat([node.location.lng, node.location.lat])
                     .addTo(m);
 

@@ -13,12 +13,12 @@ from dotenv import load_dotenv
 if os.path.exists(".env"):
     load_dotenv()
 
-from .db.session import init_db, get_session
-from .models.auth import User, UserRole
-from .core.security import get_password_hash
+from app.db.session import init_db, get_session
+from app.models.auth import User, UserRole
+from app.core.security import get_password_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
-from .db.session import engine
+from app.db.session import engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 

@@ -1,21 +1,42 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg fill="#000000" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 width="800px" height="800px" viewBox="0 0 407.184 407.184"
-	 xml:space="preserve">
-<g>
-	<path d="M407.184,189.266v-65.475H0v65.481h19.954v28.638H0v65.482h407.184V217.91h-23.018v-28.638h23.018V189.266z
-		 M72.629,256.563h-28.3v-27.688h28.3V256.563z M72.629,217.056h-28.3v-27.683h28.3V217.056z M72.629,178.295h-28.3V150.61h28.3
-		V178.295z M114.467,256.563H86.162v-27.688h28.305V256.563z M114.467,217.056H86.162v-27.683h28.305V217.056z M114.467,178.295
-		H86.162V150.61h28.305V178.295z M155.695,256.563h-28.305v-27.688h28.305V256.563z M155.695,217.056h-28.305v-27.683h28.305
-		V217.056z M155.695,178.295h-28.305V150.61h28.305V178.295z M196.492,256.563H168.19v-27.688h28.302V256.563z M196.492,217.056
-		H168.19v-27.683h28.302V217.056z M196.492,178.295H168.19V150.61h28.302V178.295z M238.334,256.563h-28.309v-27.688h28.309V256.563
-		z M238.334,217.056h-28.309v-27.683h28.309V217.056z M238.334,178.295h-28.309V150.61h28.309V178.295z M279.564,256.563h-28.301
-		v-27.688h28.301V256.563z M279.564,217.056h-28.301v-27.683h28.301V217.056z M279.564,178.295h-28.301V150.61h28.301V178.295z
-		 M342.876,255.765H306.34v-16.881h36.536V255.765z M324.467,208.377c-16.109,0-29.16-13.058-29.16-29.157
-		c0-16.099,13.051-29.152,29.16-29.152c16.111,0,29.157,13.053,29.157,29.152C353.625,195.319,340.566,208.377,324.467,208.377z
-		 M342.876,179.036c0,10.09-8.176,18.272-18.267,18.272c-10.09,0-18.274-8.182-18.274-18.272c0-10.093,8.181-18.268,18.274-18.268
-		C334.701,160.768,342.876,168.943,342.876,179.036z"/>
-</g>
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer rack chassis -->
+  <rect x="2" y="18" width="60" height="28" rx="3" fill="url(#odf-chassis-grad)" stroke="#475569" stroke-width="2"/>
+  
+  <!-- Rack mounting brackets -->
+  <rect x="2" y="18" width="4" height="28" fill="#64748b"/>
+  <rect x="58" y="18" width="4" height="28" fill="#64748b"/>
+  
+  <!-- Couplers (Ports) - bright blue (SC/UPC) or green (SC/APC) -->
+  <!-- Row 1 -->
+  <rect x="10" y="24" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="16" y="24" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="22" y="24" width="4" height="6" rx="0.5" fill="#22c55e" stroke="#15803d" stroke-width="0.5"/>
+  <rect x="28" y="24" width="4" height="6" rx="0.5" fill="#22c55e" stroke="#15803d" stroke-width="0.5"/>
+  <rect x="34" y="24" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="40" y="24" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="46" y="24" width="4" height="6" rx="0.5" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="0.5" opacity="0.4"/>
+  <rect x="52" y="24" width="4" height="6" rx="0.5" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Row 2 -->
+  <rect x="10" y="34" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="16" y="34" width="4" height="6" rx="0.5" fill="#22c55e" stroke="#15803d" stroke-width="0.5"/>
+  <rect x="22" y="34" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="28" y="34" width="4" height="6" rx="0.5" fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.5"/>
+  <rect x="34" y="34" width="4" height="6" rx="0.5" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="0.5" opacity="0.4"/>
+  <rect x="40" y="34" width="4" height="6" rx="0.5" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="0.5" opacity="0.4"/>
+  <rect x="46" y="34" width="4" height="6" rx="0.5" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="0.5" opacity="0.4"/>
+  <rect x="52" y="34" width="4" height="6" rx="0.5" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Fiber jumpers connecting to couplers -->
+  <path d="M12 27 C 12 10, -5 45, 12 58" stroke="#facc15" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M18 27 C 18 12, 0 48, 18 58" stroke="#facc15" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M24 27 C 24 15, 5 50, 24 58" stroke="#eab308" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M30 37 C 30 50, 45 45, 45 58" stroke="#3b82f6" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.9"/>
+
+  <defs>
+    <linearGradient id="odf-chassis-grad" x1="32" y1="18" x2="32" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
 </svg>
