@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monitoreo123}
       POSTGRES_DB: ${POSTGRES_DB:-monitoreodb}
     ports:
-      - "5433:5432"
+      - "${DB_PORT:-5435}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
@@ -48,7 +48,7 @@ services:
     expose:
       - "80"
     ports:
-      - "8081:80"
+      - "${WEB_PORT:-8081}:80"
     extra_hosts:
       - "map-manager-1:host-gateway" # Permite conectar con el otro proyecto docker
     depends_on:
