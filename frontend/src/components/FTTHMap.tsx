@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { NodeData, RouteData, DrawingTool } from './map/types';
 import { API_BASE } from './map/types';
 import MapToolbar from './map/MapToolbar';
+import MobileToolbar from './mobile/MobileToolbar';
 import FloatingStats from './map/FloatingStats';
 import { NodeInfoPanel, RouteInfoPanel } from './map/InfoPanels';
 import { AddNodeForm, CableForm } from './map/MapForms';
@@ -285,6 +286,23 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 onLocateMe={handleLocateMe}
                 onStartCableFromGPS={handleStartCableFromGPS}
                 hasGPSLocation={!!gpsLocation}
+            />
+
+            <MobileToolbar
+                onAddOLT={() => { dt.setActiveTool('add_olt'); setSelectedNode(null); setSelectedRoute(null); }}
+                isDrawing={dt.isDrawingCable}
+                onToggleDrawing={() => {
+                    if (dt.isDrawingCable) {
+                        dt.resetDrawing();
+                    } else {
+                        dt.setActiveTool('draw_cable');
+                        dt.setCablePoints([]);
+                    }
+                    setSelectedNode(null);
+                    setSelectedRoute(null);
+                }}
+                onOpenSearch={onOpenLocationSelector}
+                onToggleLayers={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
             />
 
             <FloatingStats nodes={nodes} routes={routes} />

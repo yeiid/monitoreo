@@ -31,7 +31,7 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
     hasGPSLocation,
 }) => {
     return (
-        <div className="map-toolbar-hud">
+        <div className="map-toolbar-hud desktop-only">
             {/* ── SECCIÓN 1: NAVEGACIÓN ── */}
             <div className="toolbar-section">
                 <button
