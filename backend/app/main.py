@@ -1,4 +1,5 @@
 import os
+import sqlalchemy as sa
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -28,6 +29,29 @@ async def force_https_middleware(request: Request, call_next):
 @app.on_event("startup")
 async def on_startup():
     await init_db()
+    await run_migrations()
+
+
+async def run_migrations():
+    """Apply missing columns to existing tables. Safe to run on every startup."""
+    from .db.session import engine
+    try:
+        async with engine.begin() as conn:
+            # Check if diagram_id column exists on splitters
+            result = await conn.execute(sa.text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='splitters' AND column_name='diagram_id'"
+            ))
+            if result.scalar() is None:
+                await conn.execute(sa.text(
+                    "ALTER TABLE splitters ADD COLUMN diagram_id VARCHAR"
+                ))
+                await conn.execute(sa.text(
+                    "CREATE INDEX ix_splitters_diagram_id ON splitters(diagram_id)"
+                ))
+                print("Migration: Added splitters.diagram_id column")
+    except Exception as e:
+        print(f"Migration warning (non-fatal): {e}")
 
 # Routers
 app.include_router(network_router, prefix="/api/v1", tags=["FTTH Network"])
