@@ -189,6 +189,8 @@ class Splitter(BaseModel, table=True):
     node_id: Optional[uuid.UUID] = Field(default=None, foreign_key="nodes.id")
     splitter_type: str  # Values from SplitterType enum
     name: str = Field(default="Splitter")
+    # ReactFlow diagram node ID (e.g. "temp-1234567890") for persistence across save/load
+    diagram_id: Optional[str] = Field(default=None, index=True)
     
     # The strand providing light to this splitter
     input_strand_id: Optional[uuid.UUID] = Field(default=None, foreign_key="fiber_strands.id")

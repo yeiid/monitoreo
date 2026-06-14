@@ -24,7 +24,12 @@ interface TargetButton {
 
 const ALLOWED_CHILDREN: Record<string, TargetButton[]> = {
     'OLT': [
+        { type: 'ODF', label: 'ODF (Bandeja Óptica)', icon: '🔲', color: NODE_CONFIG.ODF.color },
         { type: 'MUFLA', label: 'Mufla / Empalme Troncal', icon: '🔗', color: NODE_CONFIG.MUFLA.color },
+        { type: 'CAJA_NAP', label: 'Caja NAP (Distribución)', icon: '📦', color: NODE_CONFIG.CAJA_NAP.color },
+    ],
+    'ODF': [
+        { type: 'MUFLA', label: 'Mufla (Troncal)', icon: '🔗', color: NODE_CONFIG.MUFLA.color },
         { type: 'CAJA_NAP', label: 'Caja NAP (Distribución)', icon: '📦', color: NODE_CONFIG.CAJA_NAP.color },
     ],
     'MUFLA': [

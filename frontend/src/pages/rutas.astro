@@ -22,7 +22,7 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                 <a href="/" class="btn btn-glass" style="text-decoration: none;"
                     >← Volver al Mapa</a
                 >
-                <button class="btn btn-primary">+ Nuevo Cable</button>
+                <button class="btn btn-primary" id="btn-new-cable">+ Nuevo Cable</button>
             </div>
         </div>
 
@@ -70,35 +70,142 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
             </table>
         </div>
     </div>
+
+    <!-- Modal para Crear/Editar Cable -->
+    <div id="cable-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 550px; padding: 30px; width: 95%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 id="cable-modal-title" style="margin: 0; font-size: 1.3rem; font-weight: 800; color: white;">Nuevo Cable</h3>
+                <button class="modal-close-btn" id="btn-close-cable-modal" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 4px;">×</button>
+            </div>
+            <form id="cable-form" style="display: flex; flex-direction: column; gap: 16px;">
+                <input type="hidden" id="cable-id" />
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="cable-name" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nombre del Cable</label>
+                    <input type="text" id="cable-name" required placeholder="Ej: Cable Troncal Norte" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem;" />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="cable-type" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tipo de Cable</label>
+                        <select id="cable-type" required style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; cursor: pointer;">
+                            <option value="TRONCAL">Troncal</option>
+                            <option value="DISTRIBUCION">Distribución</option>
+                            <option value="ACOMETIDA">Acometida</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="cable-capacity" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Capacidad (Hilos)</label>
+                        <select id="cable-capacity" required style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; cursor: pointer;">
+                            <option value="6">6 Hilos</option>
+                            <option value="12" selected>12 Hilos</option>
+                            <option value="24">24 Hilos</option>
+                            <option value="48">48 Hilos</option>
+                            <option value="96">96 Hilos</option>
+                            <option value="144">144 Hilos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="cable-start-node" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nodo Inicio (Opcional)</label>
+                        <select id="cable-start-node" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; cursor: pointer;">
+                            <option value="">Sin nodo inicial</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="cable-end-node" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nodo Fin (Opcional)</label>
+                        <select id="cable-end-node" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; cursor: pointer;">
+                            <option value="">Sin nodo final</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="cable-desc" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Descripción</label>
+                    <textarea id="cable-desc" rows="3" placeholder="Notas sobre el tendido, longitud estimada, etc." style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; resize: none;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-glass" id="btn-cancel-cable-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cable</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </DashboardLayout>
 
 <script>
     import { API_BASE } from "../components/map/types";
+    import { apiFetch } from "../utils/apiFetch";
     import { TIA_COLORS } from "../constants/network";
 
+    let cachedNodes: any[] = [];
+
+    // TIA-598 Color Grid
     const colorGrid = document.getElementById("color-grid")!;
     if (colorGrid) {
         colorGrid.innerHTML = TIA_COLORS.map(
             (c, i) => `
             <div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--border);">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: ${
-                    c.hex
-                }; ${
-                c.name === "Blanco" ? "border: 1px solid #444" : ""
-            }"></div>
-                <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); min-width: 14px;">${
-                    i + 1
-                }</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">${
-                    c.name
-                }</span>
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: ${c.hex}; ${c.name === "Blanco" ? "border: 1px solid #444" : ""}"></div>
+                <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); min-width: 14px;">${i + 1}</span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">${c.name}</span>
             </div>
         `).join("");
     }
 
+    // Modal Elements
+    const modal = document.getElementById("cable-modal")!;
+    const modalTitle = document.getElementById("cable-modal-title")!;
+    const cableForm = document.getElementById("cable-form") as HTMLFormElement;
+    const cableIdInput = document.getElementById("cable-id") as HTMLInputElement;
+    const cableNameInput = document.getElementById("cable-name") as HTMLInputElement;
+    const cableTypeSelect = document.getElementById("cable-type") as HTMLSelectElement;
+    const cableCapacitySelect = document.getElementById("cable-capacity") as HTMLSelectElement;
+    const cableStartNodeSelect = document.getElementById("cable-start-node") as HTMLSelectElement;
+    const cableEndNodeSelect = document.getElementById("cable-end-node") as HTMLSelectElement;
+    const cableDescInput = document.getElementById("cable-desc") as HTMLTextAreaElement;
+
+    function openModal(id: string | null = null) {
+        cableForm.reset();
+        if (id) {
+            modalTitle.textContent = "Editar Cable";
+            // Edit mode would require caching routes; for now only create
+        } else {
+            modalTitle.textContent = "Nuevo Cable";
+            cableIdInput.value = "";
+        }
+        modal.style.display = "flex";
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    // Load nodes for start/end dropdowns
+    async function loadNodes() {
+        try {
+            const res = await apiFetch(`${API_BASE}/nodes`);
+            if (!res.ok) throw new Error("API error");
+            cachedNodes = await res.json();
+
+            const nodeOptions = cachedNodes.map((n: any) =>
+                `<option value="${n.id}">${n.name} (${n.node_type})</option>`
+            ).join("");
+
+            cableStartNodeSelect.innerHTML = `<option value="">Sin nodo inicial</option>${nodeOptions}`;
+            cableEndNodeSelect.innerHTML = `<option value="">Sin nodo final</option>${nodeOptions}`;
+        } catch (e) {
+            console.error("Failed to load nodes", e);
+        }
+    }
+
+    // Load routes
     async function loadRoutes() {
         try {
-            const res = await fetch(`${API_BASE}/routes`);
+            const res = await apiFetch(`${API_BASE}/routes`);
             if (!res.ok) throw new Error("API error");
             const routes = await res.json();
             localStorage.setItem("ftth_routes", JSON.stringify(routes));
@@ -166,7 +273,7 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
 
     (window as any).generateStrands = async function (routeId: string) {
         try {
-            const res = await fetch(`${API_BASE}/strands/generate`, {
+            const res = await apiFetch(`${API_BASE}/strands/generate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ route_id: routeId }),
@@ -180,138 +287,55 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
     (window as any).deleteRoute = async function(id: string) {
         if (!confirm("¿Eliminar este cable?")) return;
         try {
-            const res = await fetch(`${API_BASE}/routes/${id}`, { method: "DELETE" });
+            const res = await apiFetch(`${API_BASE}/routes/${id}`, { method: "DELETE" });
             if (res.ok) loadRoutes();
         } catch {}
     };
 
-    loadRoutes();
+    // Form submit: Create route
+    cableForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const payload: any = {
+            name: cableNameInput.value,
+            route_type: cableTypeSelect.value,
+            capacity: parseInt(cableCapacitySelect.value, 10),
+            description: cableDescInput.value || null,
+            start_node_id: cableStartNodeSelect.value || null,
+            end_node_id: cableEndNodeSelect.value || null,
+        };
+
+        try {
+            const res = await apiFetch(`${API_BASE}/routes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            if (res.ok) {
+                closeModal();
+                loadRoutes();
+            } else {
+                const errData = await res.json();
+                alert(`Error: ${errData.detail || "No se pudo guardar el cable."}`);
+            }
+        } catch {
+            alert("Error de conexión al guardar el cable.");
+        }
+    });
+
+    // Event Listeners
+    document.getElementById("btn-new-cable")!.addEventListener("click", () => openModal(null));
+    document.getElementById("btn-close-cable-modal")!.addEventListener("click", closeModal);
+    document.getElementById("btn-cancel-cable-modal")!.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Init
+    async function init() {
+        await loadNodes();
+        await loadRoutes();
+    }
+    init();
 </script>
-
-<style is:global>
-    :root {
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-hover: rgba(255, 255, 255, 0.06);
-    }
-
-    .data-table-container {
-        padding: 20px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .glass-panel {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        backdrop-filter: blur(12px);
-        margin-bottom: 24px;
-        transition: all 0.3s ease;
-    }
-
-    /* Modern Table Styles (Compatible with nodos.astro) */
-    .data-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 8px;
-    }
-
-    .data-table th {
-        padding: 16px 24px;
-        text-align: left;
-        color: var(--text-muted);
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: 700;
-        border: none;
-    }
-
-    .glass-row {
-        background: rgba(255, 255, 255, 0.02);
-        transition: all 0.2s ease;
-    }
-
-    .glass-row:hover {
-        background: var(--glass-hover);
-        transform: scale(1.002);
-    }
-
-    .glass-row td {
-        padding: 16px 24px;
-        border-top: 1px solid var(--glass-border);
-        border-bottom: 1px solid var(--glass-border);
-    }
-
-    .glass-row td:first-child {
-        border-left: 1px solid var(--glass-border);
-        border-radius: 12px 0 0 12px;
-    }
-
-    .glass-row td:last-child {
-        border-right: 1px solid var(--glass-border);
-        border-radius: 0 12px 12px 0;
-    }
-
-    .name-cell { display: flex; align-items: center; gap: 14px; }
-    .name-info { display: flex; flex-direction: column; }
-    .node-name { color: white; font-weight: 600; font-size: 0.95rem; }
-    .node-id { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
-
-    .modern-badge {
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .action-btn-wide {
-        background: rgba(139, 92, 246, 0.1);
-        color: #a78bfa;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        padding: 6px 14px;
-        border-radius: 8px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .action-btn-wide:hover {
-        background: rgba(139, 92, 246, 0.2);
-        transform: translateY(-1px);
-    }
-
-    .action-group { display: flex; gap: 8px; }
-
-    .action-btn {
-        width: 34px; height: 34px; border-radius: 10px;
-        border: 1px solid var(--glass-border);
-        background: rgba(255,255,255,0.03); color: white;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: all 0.2s ease;
-    }
-
-    .action-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
-    .action-btn.locate:hover { color: #A855F7; border-color: #A855F7; }
-    .action-btn.delete:hover { color: #f43f5e; border-color: #f43f5e; }
-
-    .empty-state { text-align: center; padding: 80px 0; color: var(--text-muted); font-style: italic; }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .animate-in { animation: fadeIn 0.4s ease forwards; }
-
-    .color-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 12px;
-    }
-</style>
 

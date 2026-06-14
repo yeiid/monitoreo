@@ -17,7 +17,7 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                     Administra la división de potencia óptica en tu red.
                 </p>
             </div>
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" id="btn-new-splitter">
                 <span>+ Nuevo Splitter</span>
             </button>
         </div>
@@ -28,7 +28,7 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                     class="stat-icon"
                     style="background: rgba(139, 92, 246, 0.1); color: var(--primary);"
                 >
-                    󰏗
+                    🔶
                 </div>
                 <div class="stat-info">
                     <span class="label">Total Splitters</span>
@@ -40,23 +40,23 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
                     class="stat-icon"
                     style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
                 >
-                    󰋗
+                    📦
                 </div>
                 <div class="stat-info">
-                    <span class="label">Balanceados</span>
+                    <span class="label">Balanceados (1x8 / 1x16)</span>
                     <span class="value" id="balanced-splitters">0</span>
                 </div>
             </div>
         </div>
 
-        <div class="glass-panel" style="padding: 4px;">
+        <div class="glass-panel" style="padding: 4px; overflow-x: auto;">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Nombre</th>
                         <th>Relación (Ratio)</th>
                         <th>Nodo Padre</th>
-                        <th>Pérdida (dB)</th>
+                        <th>Pérdida Estimada (dB)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -75,17 +75,85 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
             </table>
         </div>
     </div>
+
+    <!-- Modal para Crear/Editar Splitter -->
+    <div id="splitter-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 500px; padding: 30px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 id="modal-title" style="margin: 0; font-size: 1.3rem; font-weight: 800;">Nuevo Splitter</h3>
+                <button class="modal-close-btn" id="btn-close-modal" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 4px;">×</button>
+            </div>
+            <form id="splitter-form" style="display: flex; flex-direction: column; gap: 20px;">
+                <input type="hidden" id="splitter-id" />
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                    <label for="splitter-name" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Nombre del Splitter</label>
+                    <input type="text" id="splitter-name" required placeholder="Ej: Splitter Principal A" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem;" />
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                    <label for="splitter-type" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Relación (Ratio)</label>
+                    <select id="splitter-type" required style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; cursor: pointer;">
+                        <option value="1x4">1:4 (-7.2 dB)</option>
+                        <option value="1x8" selected>1:8 (-10.3 dB)</option>
+                        <option value="1x16">1:16 (-13.8 dB)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                    <label for="splitter-node" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Nodo Padre</label>
+                    <select id="splitter-node" required style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; color: white; outline: none; font-size: 0.95rem; cursor: pointer;">
+                        <option value="">Cargando nodos...</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-glass" id="btn-cancel-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-splitter">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </DashboardLayout>
 
 <script>
     import { API_BASE } from "../components/map/types";
+    import { apiFetch } from "../utils/apiFetch";
+
+    let cachedNodes: any[] = [];
+    let cachedSplitters: any[] = [];
+
+    const modal = document.getElementById("splitter-modal")!;
+    const modalTitle = document.getElementById("modal-title")!;
+    const splitterForm = document.getElementById("splitter-form") as HTMLFormElement;
+    const splitterIdInput = document.getElementById("splitter-id") as HTMLInputElement;
+    const splitterNameInput = document.getElementById("splitter-name") as HTMLInputElement;
+    const splitterTypeSelect = document.getElementById("splitter-type") as HTMLSelectElement;
+    const splitterNodeSelect = document.getElementById("splitter-node") as HTMLSelectElement;
+
+    // Load nodes to populate select
+    async function loadNodes() {
+        try {
+            const res = await apiFetch(`${API_BASE}/nodes`);
+            if (!res.ok) throw new Error("Error loading nodes");
+            cachedNodes = await res.json();
+            
+            // Only allow ODFs, Muflas, and Caja NAPs as parents
+            const allowedTypes = ["MUFLA", "ODF", "CAJA_NAP"];
+            const filteredNodes = cachedNodes.filter(n => allowedTypes.includes(n.node_type));
+
+            splitterNodeSelect.innerHTML = `
+                <option value="">Selecciona un nodo...</option>
+                ${filteredNodes.map(n => `<option value="${n.id}">${n.name} (${n.node_type})</option>`).join("")}
+            `;
+        } catch (e) {
+            console.error("Failed to load nodes", e);
+            splitterNodeSelect.innerHTML = `<option value="">Error al cargar nodos</option>`;
+        }
+    }
 
     async function loadSplitters() {
         try {
-            const res = await fetch(`${API_BASE}/splitters`);
+            const res = await apiFetch(`${API_BASE}/fiber/splitters`);
             if (!res.ok) throw new Error("API Error");
-            const splitters = await res.json();
-            renderSplitters(splitters);
+            cachedSplitters = await res.json();
+            renderSplitters(cachedSplitters);
         } catch (e) {
             console.error(e);
             const tbody = document.getElementById("splitters-tbody");
@@ -98,7 +166,12 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
     function renderSplitters(splitters: any[]) {
         const tbody = document.getElementById("splitters-tbody");
         const totalEl = document.getElementById("total-splitters");
+        const balancedEl = document.getElementById("balanced-splitters");
+
         if (totalEl) totalEl.textContent = String(splitters.length);
+        
+        const balancedCount = splitters.filter(s => s.splitter_type === "1x8" || s.splitter_type === "1x16").length;
+        if (balancedEl) balancedEl.textContent = String(balancedCount);
 
         if (!tbody) return;
 
@@ -107,29 +180,143 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
             return;
         }
 
+        const losses: Record<string, string> = {
+            "1x4": "7.2",
+            "1x8": "10.3",
+            "1x16": "13.8"
+        };
+
         tbody.innerHTML = splitters
             .map(
-                (s) => `
-            <tr class="animate-in">
-                <td><span style="font-weight: 600;">${s.name}</span></td>
-                <td><span class="badge badge-nap">1:${
-                    s.ratio || "N/A"
-                }</span></td>
-                <td>${s.parent_node_name || "—"}</td>
-                <td><span style="color: var(--error); font-weight: 600;">-${
-                    s.loss_db || "3.5"
-                } dB</span></td>
-                <td>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-glass" style="padding: 6px 12px; font-size: 0.8rem;">Editar</button>
-                        <button class="btn btn-glass" style="padding: 6px 12px; font-size: 0.8rem; color: var(--error);">Eliminar</button>
-                    </div>
-                </td>
-            </tr>
-        `
+                (s) => {
+                    const parentNode = cachedNodes.find(n => n.id === s.node_id);
+                    const parentName = parentNode ? parentNode.name : (s.parent_node_name || "—");
+                    const loss = losses[s.splitter_type] || "10.3";
+
+                    return `
+                    <tr class="animate-in glass-row">
+                        <td><span style="font-weight: 600; color: white;">${s.name}</span></td>
+                        <td><span class="modern-badge badge-nap">${s.splitter_type}</span></td>
+                        <td><span style="color: var(--text-secondary);">${parentName}</span></td>
+                        <td><span style="color: var(--error); font-weight: 600;">-${loss} dB</span></td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-glass btn-edit-splitter" data-id="${s.id}" style="padding: 6px 12px; font-size: 0.8rem;">Editar</button>
+                                <button class="btn btn-glass btn-delete-splitter" data-id="${s.id}" style="padding: 6px 12px; font-size: 0.8rem; color: var(--error);">Eliminar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                }
             )
             .join("");
+
+        // Wire up event listeners dynamically
+        document.querySelectorAll(".btn-edit-splitter").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = (e.currentTarget as HTMLButtonElement).getAttribute("data-id")!;
+                openModal(id);
+            });
+        });
+
+        document.querySelectorAll(".btn-delete-splitter").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const id = (e.currentTarget as HTMLButtonElement).getAttribute("data-id")!;
+                deleteSplitter(id);
+            });
+        });
     }
 
-    loadSplitters();
+    // Modal Control
+    function openModal(id: string | null = null) {
+        splitterForm.reset();
+        if (id) {
+            modalTitle.textContent = "Editar Splitter";
+            const splitter = cachedSplitters.find(s => s.id === id);
+            if (splitter) {
+                splitterIdInput.value = splitter.id;
+                splitterNameInput.value = splitter.name;
+                splitterTypeSelect.value = splitter.splitter_type;
+                splitterNodeSelect.value = splitter.node_id || "";
+            }
+        } else {
+            modalTitle.textContent = "Nuevo Splitter";
+            splitterIdInput.value = "";
+        }
+        modal.style.display = "flex";
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    // Create / Update Splitter
+    splitterForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const id = splitterIdInput.value;
+        const payload = {
+            name: splitterNameInput.value,
+            splitter_type: splitterTypeSelect.value,
+            node_id: splitterNodeSelect.value || null,
+        };
+
+        try {
+            let res;
+            if (id) {
+                // Update
+                res = await apiFetch(`${API_BASE}/fiber/splitters/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                // Create
+                res = await apiFetch(`${API_BASE}/fiber/splitters`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            if (res.ok) {
+                closeModal();
+                loadSplitters();
+            } else {
+                const errData = await res.json();
+                alert(`Error: ${errData.detail || "No se pudo guardar el splitter."}`);
+            }
+        } catch (err) {
+            alert("Error de conexión al guardar el splitter.");
+        }
+    });
+
+    async function deleteSplitter(id: string) {
+        if (!confirm("¿Eliminar este splitter?")) return;
+        try {
+            const res = await apiFetch(`${API_BASE}/fiber/splitters/${id}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                loadSplitters();
+            } else {
+                alert("No se pudo eliminar el splitter.");
+            }
+        } catch (e) {
+            alert("Error de conexión al eliminar.");
+        }
+    }
+
+    // Event Listeners
+    document.getElementById("btn-new-splitter")!.addEventListener("click", () => openModal(null));
+    document.getElementById("btn-close-modal")!.addEventListener("click", closeModal);
+    document.getElementById("btn-cancel-modal")!.addEventListener("click", closeModal);
+
+    // Initial Loading
+    async function init() {
+        await loadNodes();
+        await loadSplitters();
+    }
+
+    init();
 </script>

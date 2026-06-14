@@ -50,6 +50,14 @@ async def create_node(
     # Asignar organización y creador
     node_data["organization_id"] = current_user.organization_id
     node_data["created_by"] = current_user.id
+
+    # Set default hardware_details for OLT and ODF nodes
+    if not node_data.get("hardware_details"):
+        if node_data.get("node_type") == "OLT":
+            node_data["hardware_details"] = {"cards": 5, "ports_per_card": 16}
+        elif node_data.get("node_type") == "ODF":
+            node_data["hardware_details"] = {"capacity": 48, "used_ports": 0}
+
     db_node = Node(**node_data)
     session.add(db_node)
     await session.commit()
@@ -109,6 +117,7 @@ async def sync_node_splices(
                 node_id=node_id,
                 splitter_type=s_data.get("splitter_type", "1x8"),
                 name=s_data.get("name", "Splitter"),
+                diagram_id=diag_id,
                 configuration=s_data.get("configuration", {})
             )
             session.add(new_s)
@@ -212,5 +221,63 @@ async def get_node_splices(node_id: uuid.UUID, session: AsyncSession = Depends(g
     return {
         "splices": splices_result.scalars().all(),
         "splitters": splitters_result.scalars().all()
+    }
+
+@router.get("/{node_id}/olt-ports")
+async def get_olt_ports(node_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+    """
+    Get OLT port usage: which routes use which card/port.
+    Returns a list of {card, port, route_id, route_name, end_node_id, end_node_name}.
+    """
+    # 1. Verify node is OLT
+    node_result = await session.execute(select(Node).where(Node.id == node_id))
+    db_node = node_result.scalar_one_or_none()
+    if not db_node:
+        raise HTTPException(status_code=404, detail="Nodo no encontrado")
+    if db_node.node_type != "OLT":
+        raise HTTPException(status_code=400, detail="Este endpoint es solo para nodos OLT")
+
+    # 2. Get routes starting from this OLT (outgoing cables)
+    from geoalchemy2 import Geography
+    routes_result = await session.execute(
+        select(Route, func.ST_Length(cast(Route.path, Geography)).label("length_m"))
+        .where(Route.start_node_id == node_id)
+    )
+
+    # 3. Build port usage list
+    used_ports = []
+    for route, length_m in routes_result.all():
+        if route.source_card is not None and route.source_port is not None:
+            # Get end node name
+            end_node_name = None
+            if route.end_node_id:
+                end_result = await session.execute(select(Node).where(Node.id == route.end_node_id))
+                end_node = end_result.scalar_one_or_none()
+                if end_node:
+                    end_node_name = end_node.name
+
+            used_ports.append({
+                "card": route.source_card,
+                "port": route.source_port,
+                "route_id": str(route.id),
+                "route_name": route.name,
+                "route_type": route.route_type,
+                "capacity": route.capacity,
+                "end_node_id": str(route.end_node_id) if route.end_node_id else None,
+                "end_node_name": end_node_name,
+                "length_meters": round(length_m, 1) if length_m else None,
+            })
+
+    # 4. Get hardware details
+    hw = db_node.hardware_details or {}
+
+    return {
+        "node_id": str(node_id),
+        "node_name": db_node.name,
+        "cards": hw.get("cards", 5),
+        "ports_per_card": hw.get("ports_per_card", 16),
+        "used_ports": used_ports,
+        "total_used": len(used_ports),
+        "total_capacity": hw.get("cards", 5) * hw.get("ports_per_card", 16),
     }
 

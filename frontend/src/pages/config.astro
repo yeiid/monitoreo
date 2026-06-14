@@ -20,121 +20,252 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
             class="stats-grid"
             style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));"
         >
+            <!-- Configuración General -->
             <div class="glass-panel" style="padding: 24px;">
-                <h3
-                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: white;"
-                >
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: white;">
                     󰒓 Configuración General
                 </h3>
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <div>
-                        <label
-                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;"
-                            >NOMBRE DE LA ORGANIZACIÓN</label
-                        >
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">
+                            NOMBRE DE LA ORGANIZACIÓN
+                        </label>
                         <input
                             type="text"
+                            id="org-name"
                             class="btn btn-glass"
                             style="width: 100%; text-align: left;"
-                            value="Operador Global FTTH"
+                            placeholder="Cargando..."
                         />
                     </div>
                     <div>
-                        <label
-                            style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;"
-                            >SISTEMA DE COORDENADAS</label
-                        >
-                        <select
-                            class="btn btn-glass"
-                            style="width: 100%; text-align: left;"
-                        >
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">
+                            SISTEMA DE COORDENADAS
+                        </label>
+                        <select class="btn btn-glass" style="width: 100%; text-align: left;">
                             <option>EPSG:4326 (WGS 84)</option>
                             <option>EPSG:3857 (Web Mercator)</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" style="margin-top: 10px;"
-                        >Guardar Cambios</button
-                    >
+                    <button id="btn-save-org" class="btn btn-primary" style="margin-top: 10px;">
+                        Guardar Cambios
+                    </button>
+                    <div id="save-status" style="font-size: 0.8rem; text-align: center; min-height: 1.2em;"></div>
                 </div>
             </div>
 
+            <!-- API & Map Server -->
             <div class="glass-panel" style="padding: 24px;">
-                <h3
-                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: white;"
-                >
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: white;">
                     󰭹 API & Map Server
                 </h3>
                 <div style="display: flex; flex-direction: column; gap: 14px;">
-                    <div
-                        style="padding: 12px; border-radius: 10px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);"
-                    >
-                        <div
-                            style="display: flex; justify-content: space-between; margin-bottom: 4px;"
-                        >
-                            <span
-                                style="font-size: 0.85rem; font-weight: 600; color: var(--success);"
-                                >API Backend</span
-                            >
-                            <span
-                                style="font-size: 0.75rem; color: var(--text-muted);"
-                                >v1.0.4 - Activo</span
-                            >
+                    <div style="padding: 12px; border-radius: 10px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--success);">API Backend</span>
+                            <span id="api-status-text" style="font-size: 0.75rem; color: var(--text-muted);">Verificando...</span>
                         </div>
-                        <code
-                            style="font-size: 0.75rem; color: var(--text-muted);"
-                            >http://localhost:8000/api/v1</code
-                        >
+                        <code id="api-url" style="font-size: 0.75rem; color: var(--text-muted);">—</code>
                     </div>
 
-                    <div
-                        style="padding: 12px; border-radius: 10px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.1);"
-                    >
-                        <div
-                            style="display: flex; justify-content: space-between; margin-bottom: 4px;"
-                        >
-                            <span
-                                style="font-size: 0.85rem; font-weight: 600; color: var(--secondary);"
-                                >Servidor de Mapas</span
-                            >
-                            <span
-                                style="font-size: 0.75rem; color: var(--text-muted);"
-                                >TileServer GL - Activo</span
-                            >
+                    <div style="padding: 12px; border-radius: 10px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.1);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--secondary);">Servidor de Mapas</span>
+                            <span id="tile-status-text" style="font-size: 0.75rem; color: var(--text-muted);">Verificando...</span>
                         </div>
-                        <code
-                            style="font-size: 0.75rem; color: var(--text-muted);"
-                            >http://localhost:8080</code
-                        >
+                        <code id="tile-url" style="font-size: 0.75rem; color: var(--text-muted);">—</code>
                     </div>
 
                     <button
+                        id="btn-restart-cache"
                         class="btn btn-glass"
                         style="width: 100%; color: var(--warning); margin-top: 10px;"
-                        >Reiniciar Caché de Mapas</button
                     >
+                        Reiniciar Caché de Mapas
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Gestión de Acceso -->
         <div class="glass-panel" style="margin-top: 24px; padding: 24px;">
             <h3 style="margin-bottom: 20px; color: white;">
                 🛡️ Gestión de Acceso
             </h3>
-            <div
-                style="background: rgba(255,255,255,0.02); border-radius: 14px; padding: 20px; border: 1px solid var(--border);"
-            >
-                <p
-                    style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;"
-                >
-                    Actualmente has iniciado sesión como <strong
-                        >admin@ftth-mapper.com</strong
-                    > (Super Admin).
+            <div style="background: rgba(255,255,255,0.02); border-radius: 14px; padding: 20px; border: 1px solid var(--border);">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">
+                    Actualmente has iniciado sesión como <strong id="current-user-email">—</strong>
+                    (<span id="current-user-role">—</span>).
                 </p>
                 <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-glass">Cambiar Contraseña</button>
-                    <button class="btn btn-glass">Gestionar Usuarios</button>
+                    <button class="btn btn-glass" id="btn-change-password">Cambiar Contraseña</button>
+                    <button class="btn btn-glass" id="btn-manage-users">Gestionar Usuarios</button>
                 </div>
             </div>
         </div>
     </div>
 </DashboardLayout>
+
+<script>
+    import { API_BASE } from "../components/map/types";
+    import { apiFetch } from "../utils/apiFetch";
+
+    // ── Load user info from localStorage ──
+    function loadUserInfo() {
+        try {
+            const raw = localStorage.getItem("ftth_user");
+            if (!raw) return;
+            const user = JSON.parse(raw);
+            const emailEl = document.getElementById("current-user-email")!;
+            const roleEl = document.getElementById("current-user-role")!;
+            emailEl.textContent = user.email || "—";
+            const roleLabels: Record<string, string> = {
+                super_admin: "Super Admin",
+                org_admin: "Admin de Organización",
+                technician: "Técnico",
+            };
+            roleEl.textContent = roleLabels[user.role] || user.role;
+        } catch {}
+    }
+
+    // ── Load organization name ──
+    let currentOrgId: string | null = null;
+
+    async function loadOrg() {
+        try {
+            const user = JSON.parse(localStorage.getItem("ftth_user") || "{}");
+            if (!user.organization_id) return;
+
+            currentOrgId = user.organization_id;
+            const res = await apiFetch(`${API_BASE}/organizations`);
+            if (!res.ok) return;
+            const orgs = await res.json();
+            const org = orgs.find((o: any) => o.id === currentOrgId);
+            if (org) {
+                (document.getElementById("org-name") as HTMLInputElement).value = org.name;
+            }
+        } catch {}
+    }
+
+    // ── Save organization name ──
+    document.getElementById("btn-save-org")!.addEventListener("click", async () => {
+        const nameInput = document.getElementById("org-name") as HTMLInputElement;
+        const statusEl = document.getElementById("save-status")!;
+        const name = nameInput.value.trim();
+        if (!name) {
+            statusEl.style.color = "var(--error)";
+            statusEl.textContent = "El nombre no puede estar vacío.";
+            return;
+        }
+        if (!currentOrgId) {
+            statusEl.style.color = "var(--error)";
+            statusEl.textContent = "No se encontró la organización.";
+            return;
+        }
+
+        statusEl.style.color = "var(--text-muted)";
+        statusEl.textContent = "Guardando...";
+
+        try {
+            const res = await apiFetch(`${API_BASE}/organizations/${currentOrgId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name }),
+            });
+            if (res.ok) {
+                statusEl.style.color = "var(--success)";
+                statusEl.textContent = "✓ Nombre actualizado correctamente.";
+            } else {
+                const err = await res.json().catch(() => ({ detail: "Error" }));
+                statusEl.style.color = "var(--error)";
+                statusEl.textContent = `Error: ${err.detail}`;
+            }
+        } catch {
+            statusEl.style.color = "var(--error)";
+            statusEl.textContent = "Error de conexión.";
+        }
+    });
+
+    // ── Check API status ──
+    async function checkAPI() {
+        const apiBase = API_BASE.replace("/api/v1", "");
+        document.getElementById("api-url")!.textContent = `${apiBase}/api/v1`;
+        try {
+            const res = await fetch(`${apiBase}/health`);
+            if (res.ok) {
+                document.getElementById("api-status-text")!.textContent = "v2.0.0 — Activo";
+                document.getElementById("api-status-text")!.style.color = "var(--success)";
+            } else {
+                document.getElementById("api-status-text")!.textContent = `Error HTTP ${res.status}`;
+                document.getElementById("api-status-text")!.style.color = "var(--error)";
+            }
+        } catch {
+            document.getElementById("api-status-text")!.textContent = "Sin conexión";
+            document.getElementById("api-status-text")!.style.color = "var(--error)";
+        }
+    }
+
+    // ── Check TileServer ──
+    async function checkTileServer() {
+        const tileBase = window.location.origin;
+        document.getElementById("tile-url")!.textContent = `${tileBase}/tiles`;
+        try {
+            const res = await fetch(`${tileBase}/tiles/style.json`, { method: "HEAD" });
+            if (res.ok) {
+                document.getElementById("tile-status-text")!.textContent = "Activo";
+                document.getElementById("tile-status-text")!.style.color = "var(--success)";
+            } else {
+                document.getElementById("tile-status-text")!.textContent = `Error HTTP ${res.status}`;
+                document.getElementById("tile-status-text")!.style.color = "var(--error)";
+            }
+        } catch {
+            document.getElementById("tile-status-text")!.textContent = "No disponible";
+            document.getElementById("tile-status-text")!.style.color = "var(--text-muted)";
+        }
+    }
+
+    // ── Restart cache button ──
+    document.getElementById("btn-restart-cache")!.addEventListener("click", async () => {
+        const btn = document.getElementById("btn-restart-cache")!;
+        btn.textContent = "Reiniciando...";
+        btn.setAttribute("disabled", "true");
+        try {
+            const tileBase = window.location.origin;
+            const res = await fetch(`${tileBase}/tiles/style.json`);
+            if (res.ok) {
+                btn.textContent = "✓ Caché verificada";
+                setTimeout(() => {
+                    btn.textContent = "Reiniciar Caché de Mapas";
+                    btn.removeAttribute("disabled");
+                }, 2000);
+            } else {
+                btn.textContent = "Error al verificar";
+                setTimeout(() => {
+                    btn.textContent = "Reiniciar Caché de Mapas";
+                    btn.removeAttribute("disabled");
+                }, 2000);
+            }
+        } catch {
+            btn.textContent = "TileServer no accesible";
+            setTimeout(() => {
+                btn.textContent = "Reiniciar Caché de Mapas";
+                btn.removeAttribute("disabled");
+            }, 2000);
+        }
+    });
+
+    // ── Placeholder buttons ──
+    document.getElementById("btn-change-password")!.addEventListener("click", () => {
+        alert("Funcionalidad de cambio de contraseña próximamente.");
+    });
+
+    document.getElementById("btn-manage-users")!.addEventListener("click", () => {
+        alert("Gestión de usuarios próximamente.");
+    });
+
+    // ── Init ──
+    loadUserInfo();
+    loadOrg();
+    checkAPI();
+    checkTileServer();
+</script>

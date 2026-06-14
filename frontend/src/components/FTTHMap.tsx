@@ -57,8 +57,65 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
     const [clientForm, setClientForm] = useState({ name: '', address: '', contract: '' });
     const [isSaving, setIsSaving] = useState(false);
 
+    // GPS Location State
+    const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
+    const gpsMarkerRef = useRef<maplibregl.Marker | null>(null);
+
     // 6. Map Layers Hook
     useMapLayers(map, routes, dt.cablePoints);
+
+    // 7. GPS Location Handlers
+    const handleLocateMe = useCallback(() => {
+        if (!navigator.geolocation) {
+            alert('Tu navegador no soporta geolocalización.');
+            return;
+        }
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const loc = { lat: latitude, lng: longitude };
+                setGpsLocation(loc);
+                setIsLocating(false);
+                map.current?.flyTo({ center: [longitude, latitude], zoom: 17, speed: 1.5 });
+
+                // Create or update GPS marker
+                if (gpsMarkerRef.current) {
+                    gpsMarkerRef.current.setLngLat([longitude, latitude]);
+                } else if (map.current) {
+                    const el = document.createElement('div');
+                    el.className = 'gps-marker';
+                    el.innerHTML = '<div class="gps-marker-pulse"></div><div class="gps-marker-dot"></div>';
+                    gpsMarkerRef.current = new maplibregl.Marker({ element: el })
+                        .setLngLat([longitude, latitude])
+                        .addTo(map.current);
+                }
+            },
+            (error) => {
+                setIsLocating(false);
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        alert('Permiso de ubicación denegado. Activa la ubicación en tu navegador.');
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        alert('Ubicación no disponible. Verifica tu conexión GPS.');
+                        break;
+                    case error.TIMEOUT:
+                        alert('Tiempo de espera agotado. Intenta de nuevo.');
+                        break;
+                    default:
+                        alert('Error al obtener tu ubicación.');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }, [map]);
+
+    const handleStartCableFromGPS = useCallback(() => {
+        if (!gpsLocation) return;
+        dt.startCableAt(gpsLocation.lng, gpsLocation.lat);
+    }, [gpsLocation, dt]);
 
     // ── Interaction Logic ──
     const handleMapClick = (lat: number, lng: number) => {
@@ -81,9 +138,16 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             return d < SNAP_DISTANCE;
         });
         const point: [number, number] = nearest ? [nearest.location.lng, nearest.location.lat] : [lng, lat];
+
+        // First click validation: only when cable has no points yet
+        // (when started from GPS or node double-click, points already exist)
         if (currentCablePoints.length === 0) {
-            if (!nearest || nearest.node_type === 'CLIENTE_ONU') return;
+            // Allow starting from GPS location (no nearest node required)
+            const isGPSStart = gpsLocation &&
+                Math.sqrt(Math.pow(gpsLocation.lat - lat, 2) + Math.pow(gpsLocation.lng - lng, 2)) < SNAP_DISTANCE;
+            if (!isGPSStart && (!nearest || nearest.node_type === 'CLIENTE_ONU')) return;
         }
+
         dt.setCablePoints(prev => [...prev, point]);
         dt.setIsDrawingCable(true);
     };
@@ -218,6 +282,9 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
                 onFinishCable={finishCable}
                 onCancelCable={dt.resetDrawing}
                 onOpenLocationSelector={onOpenLocationSelector}
+                onLocateMe={handleLocateMe}
+                onStartCableFromGPS={handleStartCableFromGPS}
+                hasGPSLocation={!!gpsLocation}
             />
 
             <FloatingStats nodes={nodes} routes={routes} />

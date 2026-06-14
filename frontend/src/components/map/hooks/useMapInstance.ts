@@ -63,6 +63,13 @@ export const useMapInstance = ({ center, zoom }: UseMapInstanceProps) => {
 
         const m = map.current;
 
+        m.addControl(new maplibregl.NavigationControl(), 'top-right');
+        m.addControl(new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: false,
+            showUserLocation: true
+        }), 'top-right');
+
         m.on('moveend', () => {
             const c = m.getCenter();
             localStorage.setItem('ftth_viewport', JSON.stringify({

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cable, MousePointer, MapPin, Check, X } from 'lucide-react';
+import { Cable, MousePointer, MapPin, Check, X, Crosshair } from 'lucide-react';
 import type { DrawingTool } from './types';
 import { NODE_CONFIG } from './types';
 
@@ -12,6 +12,9 @@ interface MapToolbarProps {
     onFinishCable: () => void;
     onCancelCable: () => void;
     onOpenLocationSelector?: () => void;
+    onLocateMe?: () => void;
+    onStartCableFromGPS?: () => void;
+    hasGPSLocation?: boolean;
 }
 
 const MapToolbar: React.FC<MapToolbarProps> = ({
@@ -23,6 +26,9 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
     onFinishCable,
     onCancelCable,
     onOpenLocationSelector,
+    onLocateMe,
+    onStartCableFromGPS,
+    hasGPSLocation,
 }) => {
     return (
         <div className="map-toolbar-hud">
@@ -44,6 +50,15 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
                 >
                     <MapPin size={18} />
                     <span>Lugar</span>
+                </button>
+
+                <button
+                    className="hud-btn"
+                    onClick={onLocateMe}
+                    title="Mi Ubicación Actual"
+                >
+                    <Crosshair size={18} />
+                    <span>Ubicación</span>
                 </button>
             </div>
 
@@ -69,6 +84,18 @@ const MapToolbar: React.FC<MapToolbarProps> = ({
                     <Cable size={18} />
                     <span>Cable</span>
                 </button>
+
+                {hasGPSLocation && !isDrawingCable && hasOLT && (
+                    <button
+                        className="hud-btn gps-trace"
+                        onClick={onStartCableFromGPS}
+                        title="Iniciar trazado desde mi ubicación"
+                    >
+                        <Crosshair size={16} />
+                        <Cable size={14} />
+                        <span>Trazar aquí</span>
+                    </button>
+                )}
             </div>
 
             {/* ── SECCIÓN 3: ACCIONES DE DIBUJO (CONDICIONAL) ── */}

@@ -89,6 +89,20 @@ async def delete_splitter(splitter_id: str, session: AsyncSession = Depends(get_
     await session.delete(splitter)
     await session.commit()
 
+@router.put("/splitters/{splitter_id}", response_model=SplitterRead)
+async def update_splitter(splitter_id: str, data: SplitterCreate, session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(Splitter).where(Splitter.id == splitter_id))
+    splitter = result.scalar_one_or_none()
+    if not splitter:
+        raise HTTPException(status_code=404, detail="Splitter not found")
+    for key, value in data.model_dump().items():
+        if value is not None:
+            setattr(splitter, key, value)
+    session.add(splitter)
+    await session.commit()
+    await session.refresh(splitter)
+    return splitter
+
 # ──────────────── SPLICES ────────────────
 
 @router.post("/splices", response_model=SpliceRead, status_code=status.HTTP_201_CREATED)

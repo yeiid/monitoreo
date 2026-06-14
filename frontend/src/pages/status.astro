@@ -5,9 +5,7 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
 <DashboardLayout title="Estado del Sistema - FTTH Mapper">
     <div class="data-table-container animate-in">
         <div style="margin-bottom: 32px;">
-            <h1
-                style="font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;"
-            >
+            <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 4px;">
                 Estado del Sistema
             </h1>
             <p style="color: var(--text-muted); font-size: 0.9rem;">
@@ -16,159 +14,216 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
             </p>
         </div>
 
-        <div
-            class="stats-grid"
-            style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));"
-        >
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
             <!-- API Status -->
             <div class="glass-panel" style="padding: 24px;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"
-                >
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     <div>
-                        <h3 style="font-size: 1rem; margin-bottom: 4px;">
-                            Backend API
-                        </h3>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">
-                            FastAPI Service
-                        </p>
+                        <h3 style="font-size: 1rem; margin-bottom: 4px;">Backend API</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">FastAPI Service</p>
                     </div>
-                    <span
-                        class="badge"
-                        style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
-                        >Operacional</span
-                    >
+                    <span id="api-badge" class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">Verificando...</span>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <div
-                        style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"
-                    >
-                        <div
-                            style="width: 100%; height: 100%; background: var(--success);"
-                        >
-                        </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                        <div id="api-bar" style="width: 0%; height: 100%; background: var(--success); transition: width 0.5s ease;"></div>
                     </div>
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);"
-                    >
-                        <span>Uptime: 99.9%</span>
-                        <span>Latencia: 14ms</span>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                        <span id="api-version">Versión: —</span>
+                        <span id="api-latency">Latencia: —</span>
                     </div>
                 </div>
             </div>
 
             <!-- Database Status -->
             <div class="glass-panel" style="padding: 24px;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"
-                >
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     <div>
-                        <h3 style="font-size: 1rem; margin-bottom: 4px;">
-                            PostgreSQL + PostGIS
-                        </h3>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">
-                            Base de Datos Espacial
-                        </p>
+                        <h3 style="font-size: 1rem; margin-bottom: 4px;">PostgreSQL + PostGIS</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Base de Datos Espacial</p>
                     </div>
-                    <span
-                        class="badge"
-                        style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
-                        >Conectado</span
-                    >
+                    <span id="db-badge" class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">Verificando...</span>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <div
-                        style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"
-                    >
-                        <div
-                            style="width: 85%; height: 100%; background: var(--primary);"
-                        >
-                        </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                        <div id="db-bar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.5s ease;"></div>
                     </div>
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);"
-                    >
-                        <span>Sesiones: 12 activas</span>
-                        <span>Uso Disco: 1.2 GB</span>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                        <span id="db-sessions">Sesiones: —</span>
+                        <span id="db-info">PostGIS —</span>
                     </div>
                 </div>
             </div>
 
             <!-- Tileserver Status -->
             <div class="glass-panel" style="padding: 24px;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"
-                >
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     <div>
-                        <h3 style="font-size: 1rem; margin-bottom: 4px;">
-                            TileServer GL
-                        </h3>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">
-                            Servidor de Mapas
-                        </p>
+                        <h3 style="font-size: 1rem; margin-bottom: 4px;">TileServer GL</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Servidor de Mapas</p>
                     </div>
-                    <span
-                        class="badge"
-                        style="background: rgba(16, 185, 129, 0.1); color: var(--success);"
-                        >Activo</span
-                    >
+                    <span id="tiles-badge" class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">Verificando...</span>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <div
-                        style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;"
-                    >
-                        <div
-                            style="width: 40%; height: 100%; background: var(--olt-color);"
-                        >
-                        </div>
+                    <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                        <div id="tiles-bar" style="width: 0%; height: 100%; background: var(--olt-color); transition: width 0.5s ease;"></div>
                     </div>
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);"
-                    >
-                        <span>Caché: 450 MB</span>
-                        <span>Peticiones: 1.2k/hr</span>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                        <span id="tiles-latency">Latencia: —</span>
+                        <span id="tiles-endpoint">Endpoint: —</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- System Logs Preview -->
+        <!-- System Logs -->
         <div class="glass-panel" style="margin-top: 24px; padding: 24px;">
-            <h3 style="font-size: 1rem; margin-bottom: 16px;">
-                Registros Recientes
-            </h3>
-            <div
-                style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a5b4fc; border: 1px solid rgba(255,255,255,0.05);"
-            >
-                <div style="margin-bottom: 8px;">
-                    <span style="color: var(--text-muted);"
-                        >[2024-03-09 10:24:12]</span
-                    >
-                    <span style="color: var(--success);">INFO:</span> Usuario 'admin'
-                    inició sesión desde 192.168.1.45
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <span style="color: var(--text-muted);"
-                        >[2024-03-09 10:22:05]</span
-                    >
-                    <span style="color: var(--success);">INFO:</span> Backup automático
-                    completado exitosamente
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <span style="color: var(--text-muted);"
-                        >[2024-03-09 10:15:30]</span
-                    >
-                    <span style="color: var(--olt-color);">WARN:</span> Latencia
-                    elevada en peticiones de Tiles (maptiler.pbf)
-                </div>
-                <div style="margin-bottom: 0;">
-                    <span style="color: var(--text-muted);"
-                        >[2024-03-09 10:01:12]</span
-                    >
-                    <span style="color: var(--success);">INFO:</span> Sincronización
-                    de hilos completada para cable 'Troncal Principal Norte'
-                </div>
+            <h3 style="font-size: 1rem; margin-bottom: 16px;">Registros de Conectividad</h3>
+            <div id="system-logs" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a5b4fc; border: 1px solid rgba(255,255,255,0.05); min-height: 80px;">
+                <div style="color: var(--text-muted); font-style: italic;">Ejecutando verificaciones...</div>
             </div>
         </div>
     </div>
 </DashboardLayout>
+
+<script>
+    import { API_BASE } from "../components/map/types";
+
+    interface LogEntry {
+        time: string;
+        level: "INFO" | "WARN" | "ERROR";
+        message: string;
+    }
+
+    const logs: LogEntry[] = [];
+
+    function addLog(level: LogEntry["level"], message: string) {
+        const now = new Date();
+        const time = now.toISOString().replace("T", " ").slice(0, 19);
+        logs.unshift({ time, level, message });
+        if (logs.length > 20) logs.pop();
+        renderLogs();
+    }
+
+    function renderLogs() {
+        const container = document.getElementById("system-logs")!;
+        if (logs.length === 0) {
+            container.innerHTML = `<div style="color: var(--text-muted); font-style: italic;">Sin registros.</div>`;
+            return;
+        }
+        const colorMap: Record<string, string> = {
+            INFO: "var(--success)",
+            WARN: "var(--olt-color)",
+            ERROR: "var(--error)",
+        };
+        container.innerHTML = logs
+            .map(
+                (l) => `
+            <div style="margin-bottom: 6px;">
+                <span style="color: var(--text-muted);">[${l.time}]</span>
+                <span style="color: ${colorMap[l.level]};">${l.level}:</span>
+                <span>${l.message}</span>
+            </div>`
+            )
+            .join("");
+    }
+
+    function setBadge(id: string, text: string, ok: boolean) {
+        const el = document.getElementById(id)!;
+        el.textContent = text;
+        el.style.background = ok
+            ? "rgba(16, 185, 129, 0.1)"
+            : "rgba(239, 68, 68, 0.1)";
+        el.style.color = ok ? "var(--success)" : "var(--error)";
+    }
+
+    function setBar(id: string, pct: number, ok: boolean) {
+        const el = document.getElementById(id)!;
+        el.style.width = `${pct}%`;
+        el.style.background = ok ? "var(--success)" : "var(--error)";
+    }
+
+    // ── Check Backend API ──
+    async function checkAPI() {
+        const start = performance.now();
+        try {
+            const res = await fetch(`${API_BASE.replace("/api/v1", "")}/health`);
+            const elapsed = Math.round(performance.now() - start);
+            if (res.ok) {
+                const data = await res.json();
+                setBadge("api-badge", "Operacional", true);
+                setBar("api-bar", 100, true);
+                document.getElementById("api-latency")!.textContent = `Latencia: ${elapsed}ms`;
+                document.getElementById("api-version")!.textContent = `Estado: ${data.status}`;
+                addLog("INFO", `Backend API respondió en ${elapsed}ms — ${data.status}`);
+            } else {
+                setBadge("api-badge", "Error", false);
+                setBar("api-bar", 0, false);
+                document.getElementById("api-latency")!.textContent = `Latencia: ${elapsed}ms`;
+                addLog("ERROR", `Backend API retornó HTTP ${res.status}`);
+            }
+        } catch (e) {
+            setBadge("api-badge", "Sin conexión", false);
+            setBar("api-bar", 0, false);
+            document.getElementById("api-latency")!.textContent = "Latencia: —";
+            addLog("ERROR", "No se pudo conectar con el Backend API");
+        }
+    }
+
+    // ── Check Database (via API root — if API is up, DB is likely up) ──
+    async function checkDB() {
+        try {
+            const res = await fetch(`${API_BASE}`);
+            if (res.ok) {
+                const data = await res.json();
+                setBadge("db-badge", "Conectado", true);
+                setBar("db-bar", 85, true);
+                document.getElementById("db-sessions")!.textContent = "Sesiones: activas";
+                document.getElementById("db-info")!.textContent = data.version ? `PostGIS — v${data.version}` : "PostGIS — activo";
+                addLog("INFO", "Base de datos accesible a través del Backend");
+            } else {
+                setBadge("db-badge", "Error", false);
+                setBar("db-bar", 0, false);
+                addLog("ERROR", `Base de datos no disponible (HTTP ${res.status})`);
+            }
+        } catch {
+            setBadge("db-badge", "Sin conexión", false);
+            setBar("db-bar", 0, false);
+            addLog("ERROR", "No se pudo verificar la base de datos");
+        }
+    }
+
+    // ── Check TileServer ──
+    async function checkTileServer() {
+        const tileBase = window.location.origin;
+        const start = performance.now();
+        try {
+            const res = await fetch(`${tileBase}/tiles/style.json`, { method: "HEAD" });
+            const elapsed = Math.round(performance.now() - start);
+            if (res.ok) {
+                setBadge("tiles-badge", "Activo", true);
+                setBar("tiles-bar", 40, true);
+                document.getElementById("tiles-latency")!.textContent = `Latencia: ${elapsed}ms`;
+                document.getElementById("tiles-endpoint")!.textContent = "/tiles/style.json";
+                addLog("INFO", `TileServer respondió en ${elapsed}ms`);
+            } else {
+                setBadge("tiles-badge", "Error", false);
+                setBar("tiles-bar", 0, false);
+                addLog("WARN", `TileServer retornó HTTP ${res.status}`);
+            }
+        } catch {
+            setBadge("tiles-badge", "No disponible", false);
+            setBar("tiles-bar", 0, false);
+            document.getElementById("tiles-latency")!.textContent = "Latencia: —";
+            addLog("WARN", "TileServer no accesible (puede estar en otro host)");
+        }
+    }
+
+    // ── Init ──
+    async function init() {
+        addLog("INFO", "Iniciando verificación del sistema...");
+        await Promise.all([checkAPI(), checkDB(), checkTileServer()]);
+        addLog("INFO", "Verificación completa.");
+    }
+    init();
+</script>

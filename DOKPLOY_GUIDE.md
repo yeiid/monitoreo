@@ -1,90 +1,89 @@
-# 🚀 Guía de Despliegue en Dokploy — neuraljira.tech
+# Guia de Despliegue en Dokploy — neuraljira.tech
 
 ## Arquitectura
 
 Todo se sirve bajo **un solo dominio** (`neuraljira.tech`):
-- `/` → Frontend (Astro/React vía Nginx)
+- `/` → Frontend (Astro/React via Nginx)
 - `/api/` → Backend API (FastAPI) — proxy por Nginx
-- `/tiles/` → TileServer GL (mapa propio) — proxy por Nginx
+- Mapas → Servicio externo `map.neuraljira.tech` (consumido directamente por el frontend)
 
-## 1. Preparación
+### Servicios Docker (docker-compose.yml)
+
+| Servicio  | Descripcion                     | Puerto |
+|-----------|---------------------------------|--------|
+| `db`      | PostGIS (PostgreSQL 15)         | 5435   |
+| `api`     | Backend FastAPI                 | 8000   |
+| `web`     | Frontend Astro + Nginx          | 8081   |
+
+## 1. Preparacion
 
 ### En tu repositorio (local)
 ```bash
-# Eliminar archivos obsoletos (ejecutar una sola vez)
-powershell -File cleanup.ps1
-# O manualmente:
-# del backend\fly.toml backend\fix_status.py backend\docker-compose.yml
-# del frontend\docker-compose.yml maps\docker-compose.yml
-# del docker-compose.test-prod.yml docker-compose.local.yml docker-compose.prod.yml
-# rmdir /s backend\scripts maps\styles\osm-bright
-
 git add -A
 git commit -m "chore: cleanup for production deployment"
 git push
 ```
-
-### Subir colombia.mbtiles al VPS
-El archivo de mapa (~245MB) **no va en Git**. Súbelo manualmente:
-```bash
-# Desde tu máquina local (PowerShell/WSL):
-scp maps/colombia.mbtiles tu-usuario@tu-vps:/tmp/colombia.mbtiles
-```
-Luego en el VPS copiaremos el archivo al volumen Docker (ver paso 4).
 
 ## 2. Configurar Dokploy
 
 1. Crear un nuevo **Project** en Dokploy.
 2. Crear un nuevo **Service** tipo **Compose**.
 3. Conectar tu repositorio de GitHub.
-4. En **Compose Path** seleccionar: `docker-compose.yml` (la raíz).
+4. En **Compose Path** seleccionar: `docker-compose.yml` (la raiz).
 
 ## 3. Variables de Entorno
 
-En la pestaña **Environment** de Dokploy:
+En la pestana **Environment** de Dokploy:
 ```env
 POSTGRES_USER=monitoreo
-POSTGRES_PASSWORD=TuContraseñaSegura123!
+POSTGRES_PASSWORD=TuContrasenaSegura123!
 POSTGRES_DB=monitoreodb
 CORS_ORIGINS=https://neuraljira.tech
 ```
 
-> ⚠️ **Cambia la contraseña** por una segura. Las variables de frontend (`PUBLIC_API_URL`, `PUBLIC_MAP_TILE_URL`) ya están hardcodeadas en el compose como `/api/v1` y `/tiles/`.
+> **Importante**: Las variables de build del frontend (`PUBLIC_API_URL`, `PUBLIC_MAP_TILE_URL`) ya estan definidas en `docker-compose.yml`:
+> - `PUBLIC_API_URL=/api/v1`
+> - `PUBLIC_MAP_TILE_URL=https://map.neuraljira.tech/api/v1/style.json`
 
-## 4. Provisionar el Archivo de Mapa
-
-Después del primer deploy, el volumen `map_data` existe pero está vacío. Copia el `.mbtiles`:
-
-```bash
-# En el VPS, encontrar el ID del volumen
-docker volume inspect <proyecto>_map_data
-
-# Copiar el archivo al volumen
-docker cp /tmp/colombia.mbtiles <contenedor_tileserver>:/data/colombia.mbtiles
-
-# Reiniciar tileserver
-docker restart <contenedor_tileserver>
-```
-
-Alternativamente, si usas Dokploy con volúmenes persistentes mapeados:
-```bash
-cp /tmp/colombia.mbtiles /var/lib/docker/volumes/<proyecto>_map_data/_data/colombia.mbtiles
-```
-
-## 5. Dominio
+## 4. Dominio
 
 En Dokploy, asignar el dominio al servicio **web**:
 - **Dominio**: `neuraljira.tech`
 - **Puerto interno**: `80`
-- **HTTPS**: Activar (Dokploy/Traefik genera certificado automático)
+- **HTTPS**: Activar (Dokploy/Traefik genera certificado automatico)
 
 Solo se necesita **un dominio**. No se necesitan subdominios para API ni mapas.
 
-## 6. Deploy
+## 5. Deploy
 
-Clic en **Deploy**. Dokploy leerá `docker-compose.yml` y levantará los 4 servicios.
+Clic en **Deploy**. Dokploy leera `docker-compose.yml` y levantara los 3 servicios.
 
 ### Verificar
 - `https://neuraljira.tech` → Frontend
 - `https://neuraljira.tech/api/v1/health` → API (debe retornar 200)
-- `https://neuraljira.tech/tiles/styles/basic/style.json` → Estilo del mapa
+- `https://map.neuraljira.tech/api/v1/style.json` → Servicio de mapas (debe retornar 200)
+
+## 6. Errores Comunes
+
+### nginx: host not found in upstream "map-manager-1"
+**Causa**: `nginx.conf` referencia un servicio que no existe en la red Docker.
+**Solucion**: Eliminar el bloque `location /map-api/` de `nginx.conf` si el mapa se consume desde un servicio externo.
+
+### useAuth debe usarse dentro de un AuthProvider
+**Causa**: El Header se renderiza fuera del contexto `AuthProvider` durante transiciones de Astro.
+**Solucion**: Ya esta resuelto en `AuthProvider.tsx` — `useAuth()` devuelve valores por defecto seguros cuando no hay contexto.
+
+### 502 Bad Gateway en /map-api/
+**Causa**: El proxy `/map-api/` apunta a un servicio que no esta corriendo.
+**Solucion**: Verificar que `PUBLIC_MAP_TILE_URL` en `docker-compose.yml` apunte a la URL correcta del servicio de mapas.
+
+## 7. Variables de Build del Frontend
+
+Estas variables se establecen en el `docker-compose.yml` bajo `services.web.build.args`:
+
+| Variable             | Valor                                       | Descripcion                          |
+|----------------------|---------------------------------------------|--------------------------------------|
+| `PUBLIC_API_URL`     | `/api/v1`                                   | URL base de la API (relativa)        |
+| `PUBLIC_MAP_TILE_URL`| `https://map.neuraljira.tech/api/v1/style.json` | URL del servicio de mapas            |
+
+> **Nota**: El frontend detecta automaticamente el hostname. En `neuraljira.tech` usa `https://map.neuraljira.tech/api/v1/style.json` directamente (ver `types.ts`).

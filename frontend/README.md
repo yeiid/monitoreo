@@ -1,43 +1,63 @@
-# Astro Starter Kit: Minimal
+# Frontend — FTTH Mapper
 
-```sh
-npm create astro@latest -- --template minimal
+Astro + React + MapLibre GL para monitoreo de red FTTH.
+
+## Estructura
+
+```
+src/
+├── components/
+│   ├── auth/           # AuthProvider, AuthGuard, Login
+│   ├── map/            # MapLibre, markers, hooks, paneles
+│   ├── diagram/        # Diagramador de empalmes (ReactFlow)
+│   ├── mobile/         # Componentes mobile
+│   ├── AppShell.tsx    # Raiz de la app (envuelve todo en AuthProvider)
+│   ├── Header.tsx      # Barra superior con busqueda y usuario
+│   ├── Sidebar.tsx     # Navegacion lateral
+│   └── MapApp.tsx      # Orquestador del mapa
+├── layouts/
+│   ├── Layout.astro    # Layout base
+│   └── DashboardLayout.astro  # Layout con Sidebar + Header
+└── pages/              # Rutas de Astro (index, nodos, config, etc.)
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Variables de Entorno
 
-## 🚀 Project Structure
+| Variable              | Ejemplo                                          | Descripcion                        |
+|-----------------------|--------------------------------------------------|------------------------------------|
+| `PUBLIC_API_URL`      | `/api/v1` o `http://localhost:8000/api/v1`       | URL base de la API backend         |
+| `PUBLIC_MAP_TILE_URL` | `https://map.neuraljira.tech/api/v1/style.json`  | URL del servicio de mapas          |
+| `PUBLIC_MAP_ATTRIBUTION` | `(default OSM)`                              | Attribution del mapa               |
 
-Inside of your Astro project, you'll see the following folders and files:
+> Las variables `PUBLIC_*` se inyectan en tiempo de build. Cambiarlas requiere reconstruir.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+## Comandos
+
+```bash
+pnpm install        # Instalar dependencias
+pnpm run dev        # Desarrollo local (localhost:4321)
+pnpm run build      # Build de produccion
+pnpm run preview    # Preview del build
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Docker (desarrollo local)
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```bash
+# Desde la raiz del repo:
+docker compose up -d --build
 
-Any static assets, like images, can be placed in the `public/` directory.
+# Verificar:
+curl http://localhost:8081/
+curl http://localhost:8081/api/v1/health
+```
 
-## 🧞 Commands
+## Notas Importantes
 
-All commands are run from the root of the project, from a terminal:
+### Servicio de mapas
+El frontend consume el mapa desde un servicio externo (`map.neuraljira.tech`). No necesita un tileserver local en Docker.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### AuthProvider
+`AppShell.tsx` envuelve toda la app en `<AuthProvider>`. Las paginas que usan `DashboardLayout` usan `<HeaderWithAuth>` que tambien incluye su propio `<AuthProvider>`. El hook `useAuth()` retorna valores por defecto seguros si no hay contexto disponible.
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### Astro View Transitions
+`DashboardLayout.astro` usa `transition:persist="header"` para persistir el Header entre navegaciones. Esto puede causar que el componente Header se mantenga en el DOM mientras el React tree se re-inicializa.
