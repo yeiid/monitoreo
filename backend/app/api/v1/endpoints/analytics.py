@@ -15,10 +15,17 @@ from ....schemas.network import (
     NodeRead, ContinuousTraceRequest, ContinuousTraceResponse
 )
 
+from ..deps import get_current_user
+from ....models.auth import User
+
 router = APIRouter()
 
 @router.post("/continuous-trace", response_model=ContinuousTraceResponse)
-async def continuous_trace(data: ContinuousTraceRequest, session: AsyncSession = Depends(get_session)):
+async def continuous_trace(
+    data: ContinuousTraceRequest,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """Initial payload for the continuous drafting flow."""
     try:
         start_node = await session.get(Node, data.start_node_id)
@@ -108,7 +115,11 @@ async def continuous_trace(data: ContinuousTraceRequest, session: AsyncSession =
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/power-budget/{node_id}")
-async def get_power_budget(node_id: str, session: AsyncSession = Depends(get_session)):
+async def get_power_budget(
+    node_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """
     Recursive backward path-finding from a node to the OLT.
     Accumulates fiber loss, connector losses, and splitter losses.

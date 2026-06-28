@@ -1,7 +1,7 @@
 """
 Endpoints de autenticación: login, perfil, cambio de contraseña.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from pydantic import BaseModel as PydanticModel
@@ -9,6 +9,7 @@ from pydantic import BaseModel as PydanticModel
 from ....db.session import get_session
 from ....models.auth import User
 from ....core.security import verify_password, get_password_hash, create_access_token
+from ....core.rate_limit import rate_limit_login
 from ..deps import get_current_user
 
 router = APIRouter()
@@ -33,8 +34,15 @@ class ChangePasswordRequest(PydanticModel):
 # ── Endpoints ──
 
 @router.post("/login", response_model=LoginResponse)
-async def login(data: LoginRequest, session: AsyncSession = Depends(get_session)):
+async def login(
+    data: LoginRequest,
+    request: Request,
+    session: AsyncSession = Depends(get_session)
+):
     """Autenticar usuario con email y contraseña."""
+    # Rate limiting por IP
+    rate_limit_login(request)
+
     result = await session.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 

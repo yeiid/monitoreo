@@ -8,7 +8,14 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 
 # Configuración JWT
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "ftth-mapper-super-secret-key-change-in-production")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY no está configurada. "
+        "Define la variable de entorno JWT_SECRET_KEY con un valor seguro de al menos 32 caracteres. "
+        "Ejemplo: export JWT_SECRET_KEY='$(openssl rand -hex 32)'"
+    )
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "480"))  # 8 horas por defecto
 

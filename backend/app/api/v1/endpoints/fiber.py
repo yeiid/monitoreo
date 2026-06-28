@@ -18,12 +18,18 @@ from ....utils.optical_physics import (
 
 from ....utils.network import generate_fiber_strands, TIA_598_COLORS
 
+from ..deps import get_current_user
+
 router = APIRouter()
 
 # ──────────────── FIBER STRANDS ────────────────
 
 @router.post("/strands", response_model=FiberStrandRead, status_code=status.HTTP_201_CREATED)
-async def create_strand(data: FiberStrandCreate, session: AsyncSession = Depends(get_session)):
+async def create_strand(
+    data: FiberStrandCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     db_strand = FiberStrand(**data.model_dump())
     session.add(db_strand)
     await session.commit()
@@ -31,7 +37,11 @@ async def create_strand(data: FiberStrandCreate, session: AsyncSession = Depends
     return db_strand
 
 @router.get("/strands", response_model=List[FiberStrandRead])
-async def list_strands(route_id: str = None, session: AsyncSession = Depends(get_session)):
+async def list_strands(
+    route_id: str = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     statement = select(FiberStrand)
     if route_id:
         statement = statement.where(FiberStrand.route_id == route_id)
@@ -39,7 +49,11 @@ async def list_strands(route_id: str = None, session: AsyncSession = Depends(get
     return results.scalars().all()
 
 @router.post("/strands/generate", response_model=List[FiberStrandRead], status_code=status.HTTP_201_CREATED)
-async def generate_strands(data: GenerateStrandsRequest, session: AsyncSession = Depends(get_session)):
+async def generate_strands(
+    data: GenerateStrandsRequest,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """Auto-generate all fiber strands for a route based on its capacity using TIA-598 colors."""
     result = await session.execute(select(Route).where(Route.id == data.route_id))
     route = result.scalar_one_or_none()
@@ -54,7 +68,11 @@ async def generate_strands(data: GenerateStrandsRequest, session: AsyncSession =
     return strands
 
 @router.delete("/strands/{strand_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_strand(strand_id: str, session: AsyncSession = Depends(get_session)):
+async def delete_strand(
+    strand_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(FiberStrand).where(FiberStrand.id == strand_id))
     strand = result.scalar_one_or_none()
     if not strand:
@@ -65,7 +83,11 @@ async def delete_strand(strand_id: str, session: AsyncSession = Depends(get_sess
 # ──────────────── SPLITTERS ────────────────
 
 @router.post("/splitters", response_model=SplitterRead, status_code=status.HTTP_201_CREATED)
-async def create_splitter(data: SplitterCreate, session: AsyncSession = Depends(get_session)):
+async def create_splitter(
+    data: SplitterCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     db_splitter = Splitter(**data.model_dump())
     session.add(db_splitter)
     await session.commit()
@@ -73,7 +95,11 @@ async def create_splitter(data: SplitterCreate, session: AsyncSession = Depends(
     return db_splitter
 
 @router.get("/splitters", response_model=List[SplitterRead])
-async def list_splitters(node_id: str = None, session: AsyncSession = Depends(get_session)):
+async def list_splitters(
+    node_id: str = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     statement = select(Splitter)
     if node_id:
         statement = statement.where(Splitter.node_id == node_id)
@@ -81,7 +107,11 @@ async def list_splitters(node_id: str = None, session: AsyncSession = Depends(ge
     return results.scalars().all()
 
 @router.delete("/splitters/{splitter_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_splitter(splitter_id: str, session: AsyncSession = Depends(get_session)):
+async def delete_splitter(
+    splitter_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Splitter).where(Splitter.id == splitter_id))
     splitter = result.scalar_one_or_none()
     if not splitter:
@@ -90,7 +120,12 @@ async def delete_splitter(splitter_id: str, session: AsyncSession = Depends(get_
     await session.commit()
 
 @router.put("/splitters/{splitter_id}", response_model=SplitterRead)
-async def update_splitter(splitter_id: str, data: SplitterCreate, session: AsyncSession = Depends(get_session)):
+async def update_splitter(
+    splitter_id: str,
+    data: SplitterCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Splitter).where(Splitter.id == splitter_id))
     splitter = result.scalar_one_or_none()
     if not splitter:
@@ -106,7 +141,11 @@ async def update_splitter(splitter_id: str, data: SplitterCreate, session: Async
 # ──────────────── SPLICES ────────────────
 
 @router.post("/splices", response_model=SpliceRead, status_code=status.HTTP_201_CREATED)
-async def create_splice(data: SpliceCreate, session: AsyncSession = Depends(get_session)):
+async def create_splice(
+    data: SpliceCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     try:
         splice_data = data.model_dump()
         input_power = -3.0  # Default starting power
@@ -173,7 +212,11 @@ async def create_splice(data: SpliceCreate, session: AsyncSession = Depends(get_
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/splices", response_model=List[SpliceRead])
-async def list_splices(node_id: str = None, session: AsyncSession = Depends(get_session)):
+async def list_splices(
+    node_id: str = None,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     statement = select(Splice)
     if node_id:
         statement = statement.where(Splice.node_id == node_id)
@@ -181,7 +224,11 @@ async def list_splices(node_id: str = None, session: AsyncSession = Depends(get_
     return results.scalars().all()
 
 @router.delete("/splices/{splice_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_splice(splice_id: str, session: AsyncSession = Depends(get_session)):
+async def delete_splice(
+    splice_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Splice).where(Splice.id == splice_id))
     splice = result.scalar_one_or_none()
     if not splice:

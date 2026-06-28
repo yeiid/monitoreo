@@ -2,6 +2,7 @@
 import Layout from "./Layout.astro";
 import Sidebar from "../components/Sidebar";
 import HeaderWithAuth from "../components/HeaderWithAuth";
+import AuthGuard from "../components/auth/AuthGuard";
 
 interface Props {
     title: string;
@@ -11,14 +12,16 @@ const { title } = Astro.props;
 ---
 
 <Layout title={title}>
-    <main class="dashboard-container">
-        <Sidebar client:load transition:persist="sidebar" />
+    <AuthGuard client:load>
+        <main class="dashboard-container">
+            <Sidebar client:load transition:persist="sidebar" />
 
-        <div class="main-content">
-            <HeaderWithAuth client:load transition:persist="header" />
-            <slot />
-        </div>
-    </main>
+            <div class="main-content">
+                <HeaderWithAuth client:load transition:persist="header" />
+                <slot />
+            </div>
+        </main>
+    </AuthGuard>
 </Layout>
 
 <style is:global>

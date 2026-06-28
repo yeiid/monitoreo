@@ -4,21 +4,10 @@ import type { NodeData, RouteData } from '../types';
 import { API_BASE } from '../types';
 
 export const useFTTHData = () => {
-    const [nodes, setNodes] = useState<NodeData[]>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('ftth_nodes');
-            return saved ? JSON.parse(saved) : [];
-        }
-        return [];
-    });
-
-    const [routes, setRoutes] = useState<RouteData[]>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('ftth_routes');
-            return saved ? JSON.parse(saved) : [];
-        }
-        return [];
-    });
+    const [nodes, setNodes] = useState<NodeData[]>([]);
+    const [routes, setRoutes] = useState<RouteData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchNodes = useCallback(async () => {
         try {
@@ -26,10 +15,12 @@ export const useFTTHData = () => {
             if (res.ok) {
                 const data = await res.json();
                 setNodes(data);
-                localStorage.setItem('ftth_nodes', JSON.stringify(data));
+            } else {
+                throw new Error(`Nodes fetch failed: ${res.status}`);
             }
         } catch (err) {
             console.error(`[Nodes] Failed: ${err}`);
+            setError(`Error cargando nodos: ${err}`);
         }
     }, []);
 
@@ -39,16 +30,23 @@ export const useFTTHData = () => {
             if (res.ok) {
                 const data = await res.json();
                 setRoutes(data);
-                localStorage.setItem('ftth_routes', JSON.stringify(data));
+            } else {
+                throw new Error(`Routes fetch failed: ${res.status}`);
             }
         } catch (err) {
             console.error(`[Routes] Failed: ${err}`);
+            setError(`Error cargando cables: ${err}`);
         }
     }, []);
 
     useEffect(() => {
-        fetchNodes();
-        fetchRoutes();
+        const loadData = async () => {
+            setLoading(true);
+            setError(null);
+            await Promise.all([fetchNodes(), fetchRoutes()]);
+            setLoading(false);
+        };
+        loadData();
     }, [fetchNodes, fetchRoutes]);
 
     const deleteNode = async (nodeId: string) => {
@@ -59,6 +57,7 @@ export const useFTTHData = () => {
             return true;
         } catch (err) {
             console.error("Failed to delete node", err);
+            setError(`Error eliminando nodo: ${err}`);
             return false;
         }
     };
@@ -70,6 +69,7 @@ export const useFTTHData = () => {
             return true;
         } catch (err) {
             console.error("Failed to delete route", err);
+            setError(`Error eliminando cable: ${err}`);
             return false;
         }
     };
@@ -79,6 +79,8 @@ export const useFTTHData = () => {
         setNodes,
         routes,
         setRoutes,
+        loading,
+        error,
         fetchNodes,
         fetchRoutes,
         deleteNode,

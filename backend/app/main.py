@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 import sqlalchemy as sa
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,8 +12,44 @@ from .api.v1.router import api_router as network_router
 
 app = FastAPI(
     title="FTTH Mapping API",
-    description="Backend para el sistema de mapeo manual de planta externa FTTH",
-    version="2.0.0"
+    description="""
+## FTTH Mapper - API de Monitoreo de Red de Fibra Óptica
+
+Sistema completo para el diseño y monitoreo de plantas externas FTTH (Fiber To The Home).
+
+### Funcionalidades Principales
+
+- **Gestión de Nodos**: OLT, ODF, Muflas, Cajas NAP, Clientes ONU
+- **Trazado de Rutas**: Cables de fibra óptica con cálculo automático de longitud
+- **Inventario de Fibra**: Hilos TIA-598, Splitters, Empalmes
+- **Presupuesto Óptico**: Cálculo de pérdida de señal (dB) end-to-end
+- **Multi-tenant**: Soporte para múltiples organizaciones (ISPs)
+- **Mapa Interactivo**: Visualización geoespacial con MapLibre GL
+
+### Autenticación
+
+Todos los endpoints requieren JWT Bearer token excepto `/auth/login` y `/health`.
+
+Obtener token: `POST /api/v1/auth/login`
+
+### Documentación
+
+- [API Reference](https://github.com/tu-org/ftth-mapper/docs/API_REFERENCE.md)
+- [Architecture Guide](https://github.com/tu-org/ftth-mapper/docs/ARCHITECTURE.md)
+- [Security Audit](https://github.com/tu-org/ftth-mapper/docs/SECURITY_AUDIT.md)
+    """,
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {"name": "Auth", "description": "Autenticación y manejo de sesiones"},
+        {"name": "Organizations", "description": "Gestión de organizaciones (solo super_admin)"},
+        {"name": "Users", "description": "Gestión de usuarios y técnicos"},
+        {"name": "Nodes", "description": "CRUD de nodos de red (OLT, ODF, Mufla, NAP, Cliente)"},
+        {"name": "Routes", "description": "CRUD de cables y rutas de fibra óptica"},
+        {"name": "Fiber", "description": "Hilos, Splitters y Empalmes de fibra"},
+        {"name": "Analytics", "description": "Trazado continuo y presupuesto óptico"},
+    ]
 )
 
 # Trust proxy headers (Dokploy/Traefik)

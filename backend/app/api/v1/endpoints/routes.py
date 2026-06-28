@@ -60,7 +60,11 @@ async def list_routes(
     return routes
 
 @router.get("/{route_id}", response_model=RouteRead)
-async def get_route(route_id: str, session: AsyncSession = Depends(get_session)):
+async def get_route(
+    route_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     import json
     result = await session.execute(
         select(Route, func.ST_Length(cast(Route.path, Geography)), func.ST_AsGeoJSON(Route.path)).where(Route.id == route_id)
@@ -76,7 +80,12 @@ async def get_route(route_id: str, session: AsyncSession = Depends(get_session))
     return db_route
 
 @router.put("/{route_id}", response_model=RouteRead)
-async def update_route(route_id: str, data: RouteUpdate, session: AsyncSession = Depends(get_session)):
+async def update_route(
+    route_id: str,
+    data: RouteUpdate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Route).where(Route.id == route_id))
     route = result.scalar_one_or_none()
     if not route:
@@ -94,7 +103,11 @@ async def update_route(route_id: str, data: RouteUpdate, session: AsyncSession =
     return route
 
 @router.delete("/{route_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_route(route_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+async def delete_route(
+    route_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Route).where(Route.id == route_id))
     route = result.scalar_one_or_none()
     if not route:

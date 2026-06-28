@@ -15,7 +15,7 @@ from ....schemas.network import (
     ContinuousTraceRequest, ContinuousTraceResponse,
     RouteCreate
 )
-from ..deps import get_current_user, get_org_filter
+from ..deps import get_current_user, get_org_filter, require_admin
 
 from typing import List, Optional, Any
 
@@ -75,7 +75,11 @@ def to_uuid(val: Any) -> Optional[uuid.UUID]:
         return None
 
 @router.get("/{node_id}", response_model=NodeRead)
-async def get_node(node_id: str, session: AsyncSession = Depends(get_session)):
+async def get_node(
+    node_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     # Handle both UUID and string IDs (like "cable-in")
     clean_id = to_uuid(node_id)
     if not clean_id:
@@ -85,13 +89,20 @@ async def get_node(node_id: str, session: AsyncSession = Depends(get_session)):
     db_node = result.scalar_one_or_none()
     if not db_node:
         raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+    # Verificar que el nodo pertenece a la organización del usuario
+    org_id = get_org_filter(current_user)
+    if org_id and db_node.organization_id != org_id:
+        raise HTTPException(status_code=403, detail="Acceso denegado: nodo no pertenece a tu organización")
+
     return db_node
 
 @router.post("/{node_id}/sync-splices")
 async def sync_node_splices(
     node_id: uuid.UUID, 
     data: dict, # Contains { "splices": [...], "splitters": [...] }
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Atomic sync of all internal connections (splices and splitters) for a node.
@@ -103,6 +114,11 @@ async def sync_node_splices(
         db_node = node_result.scalar_one_or_none()
         if not db_node:
             raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+        # Verificar que el nodo pertenece a la organización del usuario
+        org_id = get_org_filter(current_user)
+        if org_id and db_node.organization_id != org_id:
+            raise HTTPException(status_code=403, detail="Acceso denegado: nodo no pertenece a tu organización")
 
         # 2. Delete existing splices and splitters for this node using SQLAlchemy's delete
         from sqlalchemy import delete
@@ -165,11 +181,22 @@ async def sync_node_splices(
         raise HTTPException(status_code=500, detail=f"Error en sincronización: {err_msg}")
 
 @router.put("/{node_id}", response_model=NodeRead)
-async def update_node(node_id: str, data: NodeUpdate, session: AsyncSession = Depends(get_session)):
+async def update_node(
+    node_id: str,
+    data: NodeUpdate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Node).where(Node.id == node_id))
     node = result.scalar_one_or_none()
     if not node:
         raise HTTPException(status_code=404, detail="Node not found")
+
+    # Verificar que el nodo pertenece a la organización del usuario
+    org_id = get_org_filter(current_user)
+    if org_id and node.organization_id != org_id:
+        raise HTTPException(status_code=403, detail="Acceso denegado: nodo no pertenece a tu organización")
+
     update_data = data.model_dump(exclude_unset=True)
     if "location" in update_data and update_data["location"]:
         loc = update_data["location"]
@@ -182,11 +209,20 @@ async def update_node(node_id: str, data: NodeUpdate, session: AsyncSession = De
     return node
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_node(node_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+async def delete_node(
+    node_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     result = await session.execute(select(Node).where(Node.id == node_id))
     node = result.scalar_one_or_none()
     if not node:
         raise HTTPException(status_code=404, detail="Node not found")
+
+    # Verificar que el nodo pertenece a la organización del usuario
+    org_id = get_org_filter(current_user)
+    if org_id and node.organization_id != org_id:
+        raise HTTPException(status_code=403, detail="Acceso denegado: nodo no pertenece a tu organización")
         
     # Cascade deletes
     routes_result = await session.execute(
@@ -210,11 +246,25 @@ async def delete_node(node_id: uuid.UUID, session: AsyncSession = Depends(get_se
     await session.commit()
 
 @router.get("/{node_id}/splices")
-async def get_node_splices(node_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+async def get_node_splices(
+    node_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """
     Retrieve all logical splices and splitters configured inside a node.
     Used for rendering the internal fiber diagram.
     """
+    # Verificar que el nodo pertenece a la organización del usuario
+    node_result = await session.execute(select(Node).where(Node.id == node_id))
+    db_node = node_result.scalar_one_or_none()
+    if not db_node:
+        raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+    org_id = get_org_filter(current_user)
+    if org_id and db_node.organization_id != org_id:
+        raise HTTPException(status_code=403, detail="Acceso denegado: nodo no pertenece a tu organización")
+
     splices_result = await session.execute(select(Splice).where(Splice.node_id == node_id))
     splitters_result = await session.execute(select(Splitter).where(Splitter.node_id == node_id))
     
@@ -224,7 +274,11 @@ async def get_node_splices(node_id: uuid.UUID, session: AsyncSession = Depends(g
     }
 
 @router.get("/{node_id}/olt-ports")
-async def get_olt_ports(node_id: uuid.UUID, session: AsyncSession = Depends(get_session)):
+async def get_olt_ports(
+    node_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """
     Get OLT port usage: which routes use which card/port.
     Returns a list of {card, port, route_id, route_name, end_node_id, end_node_name}.
@@ -234,6 +288,12 @@ async def get_olt_ports(node_id: uuid.UUID, session: AsyncSession = Depends(get_
     db_node = node_result.scalar_one_or_none()
     if not db_node:
         raise HTTPException(status_code=404, detail="Nodo no encontrado")
+
+    # Verificar que el nodo pertenece a la organización del usuario
+    org_id = get_org_filter(current_user)
+    if org_id and db_node.organization_id != org_id:
+        raise HTTPException(status_code=403, detail="Acceso denegado: nodo no pertenece a tu organización")
+
     if db_node.node_type != "OLT":
         raise HTTPException(status_code=400, detail="Este endpoint es solo para nodos OLT")
 

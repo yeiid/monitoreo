@@ -8,6 +8,8 @@ El Super Admin puede luego crear organizaciones y sus respectivos admins desde l
 """
 import asyncio
 import os
+import secrets
+import string
 from dotenv import load_dotenv
 
 if os.path.exists(".env"):
@@ -22,6 +24,23 @@ from app.db.session import engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
+def generate_secure_password(length: int = 16) -> str:
+    """Genera una contraseña segura con mayúsculas, minúsculas, números y símbolos."""
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    # Asegurar al menos un carácter de cada tipo
+    password = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%^&*"),
+    ]
+    password += [secrets.choice(alphabet) for _ in range(length - 4)]
+    # Mezclar
+    import random
+    random.SystemRandom().shuffle(password)
+    return ''.join(password)
+
+
 async def seed_data(session: AsyncSession):
     """Lógica para crear el Super Admin inicial si no existe."""
     # Verificar si ya existe un super admin
@@ -31,13 +50,18 @@ async def seed_data(session: AsyncSession):
     existing = result.scalar_one_or_none()
     
     if existing:
-        print(f"⚠️ Ya existe un Super Admin: {existing.email}")
+        print(f"Ya existe un Super Admin: {existing.email}")
         return
     
     # Crear Super Admin
     email = os.getenv("SUPER_ADMIN_EMAIL", "admin@ftth-mapper.com")
-    password = os.getenv("SUPER_ADMIN_PASSWORD", "admin123")
     name = os.getenv("SUPER_ADMIN_NAME", "Super Administrador")
+
+    # Si no se proporciona contraseña, generar una segura
+    password = os.getenv("SUPER_ADMIN_PASSWORD")
+    if not password or password in ("admin123", "CAMBIA_ESTA_CONTRASEÑA"):
+        password = generate_secure_password()
+        print(f"   Contraseña generada automáticamente (guárdala en un lugar seguro)")
     
     admin = User(
         email=email,
@@ -50,7 +74,7 @@ async def seed_data(session: AsyncSession):
     session.add(admin)
     await session.commit()
     
-    print(f"✅ Super Admin creado exitosamente:")
+    print(f"Super Admin creado exitosamente:")
     print(f"   Email: {email}")
     print(f"   Password: {password}")
 

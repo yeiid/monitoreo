@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import type { NodeData, RouteData, DrawingTool } from './map/types';
+import type { NodeData, RouteData } from './map/types';
 import { API_BASE } from './map/types';
 import MapToolbar from './map/MapToolbar';
 import MobileToolbar from './mobile/MobileToolbar';
@@ -31,7 +31,7 @@ interface FTTHMapProps {
 
 const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOpenLocationSelector }) => {
     // 1. Data Hook
-    const { nodes, setNodes, routes, setRoutes, deleteNode, deleteRoute } = useFTTHData();
+    const { nodes, setNodes, routes, setRoutes, deleteNode, deleteRoute, loading, error } = useFTTHData();
     const nodesRef = useRef<NodeData[]>(nodes);
     const routesRef = useRef<RouteData[]>(routes);
     useEffect(() => { nodesRef.current = nodes; }, [nodes]);
@@ -235,10 +235,10 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             path: { coordinates: dt.cablePoints },
             start_node_id: startNode.id,
             node_data: { name: nodeName, node_type: targetType, description: clientForm.address },
-            route_data: { 
-                name: `Cable a ${nodeName}`, 
-                route_type: targetType === 'CLIENTE_ONU' ? 'ACOMETIDA' : 'DISTRIBUCION', 
-                capacity: targetType === 'CLIENTE_ONU' ? 4 : 16 
+            route_data: {
+                name: `Cable a ${nodeName}`,
+                route_type: targetType === 'CLIENTE_ONU' ? 'ACOMETIDA' : 'DISTRIBUCION',
+                capacity: targetType === 'CLIENTE_ONU' ? 4 : 16
             },
         };
         setIsSaving(true);
@@ -274,6 +274,31 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100%', background: '#1a1a1a', zIndex: 1 }} />
 
+            {/* Loading overlay */}
+            {loading && (
+                <div style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(5, 5, 10, 0.9)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    flexDirection: 'column',
+                    gap: '16px',
+                    color: '#a78bfa',
+                }}>
+                    <div className="animate-spin" style={{
+                        width: '40px', height: '40px',
+                        border: '3px solid rgba(167, 139, 250, 0.2)',
+                        borderTopColor: '#a78bfa',
+                        borderRadius: '50%',
+                    }} />
+                    <span style={{ fontWeight: 600, letterSpacing: '0.1em', fontSize: '0.85rem' }}>CARGANDO RED FTTH...</span>
+                </div>
+            )}
+
             <MapToolbar
                 activeTool={dt.activeTool}
                 setActiveTool={(t) => { dt.setActiveTool(t); setSelectedNode(null); setSelectedRoute(null); if (t === 'draw_cable') dt.setCablePoints([]); }}
@@ -289,19 +314,17 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             />
 
             <MobileToolbar
-                onAddOLT={() => { dt.setActiveTool('add_olt'); setSelectedNode(null); setSelectedRoute(null); }}
-                isDrawing={dt.isDrawingCable}
-                onToggleDrawing={() => {
-                    if (dt.isDrawingCable) {
-                        dt.resetDrawing();
-                    } else {
-                        dt.setActiveTool('draw_cable');
-                        dt.setCablePoints([]);
-                    }
-                    setSelectedNode(null);
-                    setSelectedRoute(null);
-                }}
-                onOpenSearch={onOpenLocationSelector}
+                activeTool={dt.activeTool}
+                setActiveTool={dt.setActiveTool}
+                hasOLT={nodes.some(n => n.node_type === 'OLT')}
+                isDrawingCable={dt.isDrawingCable}
+                cablePointCount={dt.cablePoints.length}
+                onFinishCable={finishCable}
+                onCancelCable={dt.resetDrawing}
+                onOpenLocationSelector={onOpenLocationSelector}
+                onLocateMe={handleLocateMe}
+                onStartCableFromGPS={handleStartCableFromGPS}
+                hasGPSLocation={!!gpsLocation}
                 onToggleLayers={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
             />
 
@@ -319,11 +342,11 @@ const FTTHMap: React.FC<FTTHMapProps> = ({ center, zoom, onNodeDoubleClick, onOp
             )}
 
             {selectedRoute && dt.activeTool !== 'draw_cable' && (
-                <RouteInfoPanel 
-                    route={selectedRoute} 
-                    topOffset={selectedNode ? '490px' : '16px'} 
-                    onClose={() => setSelectedRoute(null)} 
-                    onDelete={async (id) => { if (await deleteRoute(id)) setSelectedRoute(null); }} 
+                <RouteInfoPanel
+                    route={selectedRoute}
+                    topOffset={selectedNode ? '490px' : '16px'}
+                    onClose={() => setSelectedRoute(null)}
+                    onDelete={async (id) => { if (await deleteRoute(id)) setSelectedRoute(null); }}
                     onCenter={(r) => r.path.coordinates[0] && flyToRoute(r.path.coordinates[0][0], r.path.coordinates[0][1])}
                 />
             )}
