@@ -9,14 +9,19 @@ export default function MapApp() {
     const [selectedNode, setSelectedNode] = useState<any>(null);
     const [showLocationSelector, setShowLocationSelector] = useState(false);
 
-    // Default to Bogota, but ideally read from localStorage
+    // Default to Bogota, read from localStorage (ftth_viewport)
     const [mapView, setMapView] = useState<{
         center: [number, number];
         zoom: number;
     }>(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('ftth_last_view');
-            if (saved) return JSON.parse(saved);
+            const saved = localStorage.getItem('ftth_viewport');
+            if (saved) {
+                try {
+                    const { lng, lat, zoom: sz } = JSON.parse(saved);
+                    return { center: [lat, lng], zoom: sz };
+                } catch (e) { /* ignore */ }
+            }
         }
         return { center: [4.6097, -74.0817], zoom: 6 };
     });
@@ -24,9 +29,7 @@ export default function MapApp() {
     const handleLocationSelect = (view: { center: [number, number]; zoom: number }) => {
         setMapView(view);
         setShowLocationSelector(false);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('ftth_last_view', JSON.stringify(view));
-        }
+        // useMapInstance will persist to ftth_viewport on moveend
     };
 
     return (

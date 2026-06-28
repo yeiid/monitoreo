@@ -175,10 +175,8 @@ async def sync_node_splices(
         
     except Exception as e:
         await session.rollback()
-        import traceback
-        err_msg = f"{type(e).__name__}: {str(e)}"
-        print(f"ERROR in sync_node_splices: {err_msg}\n{traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Error en sincronización: {err_msg}")
+        print(f"ERROR in sync_node_splices: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno en la sincronización de empalmes")
 
 @router.put("/{node_id}", response_model=NodeRead)
 async def update_node(

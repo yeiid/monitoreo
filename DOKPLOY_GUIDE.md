@@ -39,11 +39,15 @@ POSTGRES_USER=monitoreo
 POSTGRES_PASSWORD=TuContrasenaSegura123!
 POSTGRES_DB=monitoreodb
 CORS_ORIGINS=https://neuraljira.tech
+JWT_SECRET_KEY=<generar_con_openssl_rand_hex_32>
+SUPER_ADMIN_EMAIL=admin@ftth-mapper.com
+SUPER_ADMIN_PASSWORD=<contraseña_segura>
+SUPER_ADMIN_NAME=Super Administrador
 ```
 
-> **Importante**: Las variables de build del frontend (`PUBLIC_API_URL`, `PUBLIC_MAP_TILE_URL`) ya estan definidas en `docker-compose.yml`:
-> - `PUBLIC_API_URL=/api/v1`
-> - `PUBLIC_MAP_TILE_URL=https://map.neuraljira.tech/api/v1/style.json`
+> **Importante**: 
+> - `JWT_SECRET_KEY` es **obligatoria**. Generar con: `openssl rand -hex 32`
+> - Si `SUPER_ADMIN_PASSWORD` no se define o es insegura, se genera automáticamente una contraseña aleatoria (se guarda en los logs del primer deploy).
 
 ## 4. Dominio
 

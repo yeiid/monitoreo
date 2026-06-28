@@ -30,6 +30,10 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-monitoreo}:${POSTGRES_PASSWORD:-monitoreo123}@db:5432/${POSTGRES_DB:-monitoreodb}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://neuraljira.tech}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Error: JWT_SECRET_KEY must be set in .env}
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-admin@ftth-mapper.com}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:-}
+      SUPER_ADMIN_NAME: ${SUPER_ADMIN_NAME:-Super Administrador}
     depends_on:
       db:
         condition: service_healthy

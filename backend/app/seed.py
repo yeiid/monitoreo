@@ -76,7 +76,10 @@ async def seed_data(session: AsyncSession):
     
     print(f"Super Admin creado exitosamente:")
     print(f"   Email: {email}")
-    print(f"   Password: {password}")
+    if password != os.getenv("SUPER_ADMIN_PASSWORD"):
+        print(f"   Password: {password} (GUARDA ESTA CONTRASEÑA - solo se muestra una vez)")
+    else:
+        print(f"   Password: [configurada desde variable de entorno]")
 
 
 async def seed():

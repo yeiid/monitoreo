@@ -112,7 +112,9 @@ async def continuous_trace(
         
     except Exception as e:
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        if isinstance(e, HTTPException): raise e
+        print(f"ERROR in continuous_trace: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno en el trazado continuo")
 
 @router.get("/power-budget/{node_id}")
 async def get_power_budget(
@@ -238,4 +240,5 @@ async def get_power_budget(
 
     except Exception as e:
         if isinstance(e, HTTPException): raise e
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"ERROR in power_budget: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno en el cálculo de presupuesto óptico")

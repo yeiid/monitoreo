@@ -87,6 +87,16 @@ export const useMapInstance = ({ center, zoom }: UseMapInstanceProps) => {
         };
     }, []);
 
+    // Fix: reaccionar a cambios de center/zoom desde LocationSelector
+    useEffect(() => {
+        if (!map.current) return;
+        map.current.flyTo({
+            center: [center[1], center[0]], // convertir [lat, lng] a [lng, lat]
+            zoom: zoom,
+            speed: 1.5
+        });
+    }, [center[0], center[1], zoom]);
+
     const flyToNode = useCallback((lng: number, lat: number) => {
         if (!map.current) return;
         map.current.flyTo({

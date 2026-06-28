@@ -40,8 +40,9 @@ print(f"📡 Connecting to database: {masked_url}")
 IS_SQLITE = DATABASE_URL.startswith("sqlite")
 
 connect_args = {"check_same_thread": False} if IS_SQLITE else {}
+echo_sql = os.getenv("ECHO_SQL", "false").lower() == "true"
 try:
-    engine = create_async_engine(DATABASE_URL, echo=True, future=True, connect_args=connect_args)
+    engine = create_async_engine(DATABASE_URL, echo=echo_sql, future=True, connect_args=connect_args)
 except Exception as e:
     print(f"❌ CRITICAL: Failed to create engine with URL: {masked_url}")
     print(f"Error detail: {e}")

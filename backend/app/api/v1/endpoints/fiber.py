@@ -7,6 +7,7 @@ from sqlalchemy import func, cast
 
 from ....db.session import get_session
 from ....models.network import Node, Route, FiberStrand, Splitter, Splice, FiberColor
+from ....models.auth import User
 from ....schemas.network import (
     FiberStrandCreate, FiberStrandRead, GenerateStrandsRequest,
     SplitterCreate, SplitterRead,
@@ -209,7 +210,8 @@ async def create_splice(
 
     except Exception as e:
         await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"ERROR in create_splice: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno al crear el empalme")
 
 @router.get("/splices", response_model=List[SpliceRead])
 async def list_splices(
